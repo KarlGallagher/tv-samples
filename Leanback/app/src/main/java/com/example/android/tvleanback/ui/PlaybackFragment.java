@@ -56,13 +56,18 @@ import com.google.android.exoplayer2.ext.leanback.LeanbackPlayerAdapter;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.dash.DashMediaSource;
+import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
+import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 
 import static com.example.android.tvleanback.ui.PlaybackFragment.VideoLoaderCallbacks.RELATED_VIDEOS_LOADER;
@@ -80,15 +85,20 @@ public class PlaybackFragment extends VideoSupportFragment {
     private SimpleExoPlayer mPlayer;
     private TrackSelector mTrackSelector;
     private PlaylistActionListener mPlaylistActionListener;
+    private DefaultBandwidthMeter mBandwidthMeter;
 
     private Video mVideo;
     private Playlist mPlaylist;
     private VideoLoaderCallbacks mVideoLoaderCallbacks;
     private CursorObjectAdapter mVideoCursorAdapter;
 
+    String userAgent;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        userAgent = Util.getUserAgent(getContext(), "TVsample");
 
         mVideo = getActivity().getIntent().getParcelableExtra(VideoDetailsActivity.VIDEO);
         mPlaylist = new Playlist();
@@ -143,9 +153,9 @@ public class PlaybackFragment extends VideoSupportFragment {
     }
 
     private void initializePlayer() {
-        BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
+        mBandwidthMeter = new DefaultBandwidthMeter();
         TrackSelection.Factory videoTrackSelectionFactory =
-                new AdaptiveTrackSelection.Factory(bandwidthMeter);
+                new AdaptiveTrackSelection.Factory(mBandwidthMeter);
         mTrackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
         mPlayer = ExoPlayerFactory.newSimpleInstance(getActivity(), mTrackSelector);
@@ -180,17 +190,39 @@ public class PlaybackFragment extends VideoSupportFragment {
     }
 
     private void prepareMediaForPlaying(Uri mediaSourceUri) {
-        String userAgent = Util.getUserAgent(getActivity(), "VideoPlayerGlue");
-        MediaSource mediaSource =
-                new ExtractorMediaSource(
-                        mediaSourceUri,
-                        new DefaultDataSourceFactory(getActivity(), userAgent),
-                        new DefaultExtractorsFactory(),
-                        null,
-                        null);
+//        MediaSource mediaSource =
+//                new ExtractorMediaSource(
+//                        mediaSourceUri,
+//                        new DefaultDataSourceFactory(getActivity(), userAgent),
+//                        new DefaultExtractorsFactory(),
+//                        null,
+//                        null);
 
-        mPlayer.prepare(mediaSource);
+        //Exoplayer example for clear dash content. ()
+
+        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(),"ExoPlayer"));
+
+        DashMediaSource dashMediaSource = new DashMediaSource(mediaSourceUri, dataSourceFactory,
+                new DefaultDashChunkSource.Factory(dataSourceFactory), null, null);
+
+//        DashMediaSource videoSource = new DashMediaSource.Factory(
+//                new DefaultDashChunkSource.Factory(dataSourceFactory),
+//                buildDataSourceFactory(mBandwidthMeter))
+//                .createMediaSource(mediaSourceUri, null, null);
+
+        mPlayer.prepare(dashMediaSource);
     }
+
+//
+//    private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
+//        return new DefaultHttpDataSourceFactory(userAgent, bandwidthMeter);
+//    }
+//
+//    private DataSource.Factory buildDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
+//        DefaultDataSourceFactory defaultDataSourceFactory = new DefaultDataSourceFactory(getContext(), bandwidthMeter,
+//                buildHttpDataSourceFactory(bandwidthMeter));
+//        return defaultDataSourceFactory;
+//    }
 
     private ArrayObjectAdapter initializeRelatedVideosRow() {
         /*

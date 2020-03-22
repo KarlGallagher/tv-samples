@@ -98,6 +98,7 @@ public class VideoDbBuilder {
 
                 // If there are no URLs, skip this video entry.
                 JSONArray urls = video.optJSONArray(TAG_SOURCES);
+//                JSONArray urls = new JSONArray().put("https://urm.latens.com:9443/content/dash_clr/out.mpd");
                 if (urls == null || urls.length() == 0) {
                     continue;
                 }
@@ -119,7 +120,7 @@ public class VideoDbBuilder {
                 videoValues.put(VideoContract.VideoEntry.COLUMN_STUDIO, studio);
 
                 // Fixed defaults.
-                videoValues.put(VideoContract.VideoEntry.COLUMN_CONTENT_TYPE, "video/mp4");
+                videoValues.put(VideoContract.VideoEntry.COLUMN_CONTENT_TYPE, "application/dash+xml");                        //
                 videoValues.put(VideoContract.VideoEntry.COLUMN_IS_LIVE, false);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_AUDIO_CHANNEL_CONFIG, "2.0");
                 videoValues.put(VideoContract.VideoEntry.COLUMN_PRODUCTION_YEAR, 2014);
@@ -166,6 +167,7 @@ public class VideoDbBuilder {
                 sb.append(line);
             }
             String json = sb.toString();
+            Log.d("TESTING", json);
             return new JSONObject(json);
         } finally {
             urlConnection.disconnect();
