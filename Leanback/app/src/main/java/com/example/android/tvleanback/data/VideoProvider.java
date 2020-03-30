@@ -70,6 +70,8 @@ public class VideoProvider extends ContentProvider {
                 VideoContract.VideoEntry.COLUMN_BG_IMAGE_URL,
                 VideoContract.VideoEntry.COLUMN_STUDIO,
                 VideoContract.VideoEntry.COLUMN_CARD_IMG,
+                VideoContract.VideoEntry.COLUMN_LICENSE,
+                VideoContract.VideoEntry.COLUMN_AUTH_TOKEN,
                 VideoContract.VideoEntry.COLUMN_CONTENT_TYPE,
                 VideoContract.VideoEntry.COLUMN_IS_LIVE,
                 VideoContract.VideoEntry.COLUMN_VIDEO_WIDTH,
@@ -126,6 +128,8 @@ public class VideoProvider extends ContentProvider {
                 VideoContract.VideoEntry.COLUMN_BG_IMAGE_URL);
         map.put(VideoContract.VideoEntry.COLUMN_CARD_IMG, VideoContract.VideoEntry.COLUMN_CARD_IMG);
         map.put(VideoContract.VideoEntry.COLUMN_STUDIO, VideoContract.VideoEntry.COLUMN_STUDIO);
+        map.put(VideoContract.VideoEntry.COLUMN_LICENSE, VideoContract.VideoEntry.COLUMN_LICENSE);
+        map.put(VideoContract.VideoEntry.COLUMN_AUTH_TOKEN, VideoContract.VideoEntry.COLUMN_AUTH_TOKEN);
         map.put(VideoContract.VideoEntry.COLUMN_CONTENT_TYPE,
                 VideoContract.VideoEntry.COLUMN_CONTENT_TYPE);
         map.put(VideoContract.VideoEntry.COLUMN_IS_LIVE, VideoContract.VideoEntry.COLUMN_IS_LIVE);

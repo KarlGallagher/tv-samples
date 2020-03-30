@@ -19,9 +19,12 @@ package com.example.android.tvleanback.ui;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.database.Cursor;
+import android.media.MediaDrm;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+
 import androidx.leanback.app.VideoFragment;
 import androidx.leanback.app.VideoFragmentGlueHost;
 import androidx.leanback.app.VideoSupportFragment;
@@ -45,19 +48,31 @@ import androidx.loader.content.Loader;
 
 import com.example.android.tvleanback.R;
 import com.example.android.tvleanback.data.VideoContract;
+import com.example.android.tvleanback.data.VideoDbBuilder;
 import com.example.android.tvleanback.model.Playlist;
 import com.example.android.tvleanback.model.Video;
 import com.example.android.tvleanback.model.VideoCursorMapper;
 import com.example.android.tvleanback.player.VideoPlayerGlue;
 import com.example.android.tvleanback.presenter.CardPresenter;
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
+import com.google.android.exoplayer2.drm.DrmSessionManager;
+import com.google.android.exoplayer2.drm.ExoMediaCrypto;
+import com.google.android.exoplayer2.drm.ExoMediaDrm;
+import com.google.android.exoplayer2.drm.FrameworkMediaDrm;
 import com.google.android.exoplayer2.ext.leanback.LeanbackPlayerAdapter;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.offline.DownloadHelper;
+import com.google.android.exoplayer2.offline.DownloadRequest;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
 import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
+import com.google.android.exoplayer2.source.hls.HlsMediaSource;
+import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -69,6 +84,10 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
 
 import static com.example.android.tvleanback.ui.PlaybackFragment.VideoLoaderCallbacks.RELATED_VIDEOS_LOADER;
 
@@ -86,6 +105,7 @@ public class PlaybackFragment extends VideoSupportFragment {
     private TrackSelector mTrackSelector;
     private PlaylistActionListener mPlaylistActionListener;
     private DefaultBandwidthMeter mBandwidthMeter;
+    private DrmSessionManager drmSessionManager;
 
     private Video mVideo;
     private Playlist mPlaylist;
@@ -190,39 +210,77 @@ public class PlaybackFragment extends VideoSupportFragment {
     }
 
     private void prepareMediaForPlaying(Uri mediaSourceUri) {
-//        MediaSource mediaSource =
-//                new ExtractorMediaSource(
-//                        mediaSourceUri,
-//                        new DefaultDataSourceFactory(getActivity(), userAgent),
-//                        new DefaultExtractorsFactory(),
-//                        null,
-//                        null);
+//        commented this part out and thinking of moving it around
+//        MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(VideoDbBuilder.TAG_LICENSE, VideoDbBuilder.TAG_AUTH_TOKEN);
 
-        //Exoplayer example for clear dash content. ()
+        createDrm();
 
         DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(),"ExoPlayer"));
 
-        DashMediaSource dashMediaSource = new DashMediaSource(mediaSourceUri, dataSourceFactory,
-                new DefaultDashChunkSource.Factory(dataSourceFactory), null, null);
+//        DashMediaSource dashMediaSource = new DashMediaSource(mediaSourceUri, dataSourceFactory,
+//                new DefaultDashChunkSource.Factory(dataSourceFactory), null, null);
 
-//        DashMediaSource videoSource = new DashMediaSource.Factory(
-//                new DefaultDashChunkSource.Factory(dataSourceFactory),
-//                buildDataSourceFactory(mBandwidthMeter))
-//                .createMediaSource(mediaSourceUri, null, null);
+        DashMediaSource dashMediaSource = new DashMediaSource.Factory(dataSourceFactory)
+                        .setDrmSessionManager(drmSessionManager)
+                        .createMediaSource(mediaSourceUri);
 
         mPlayer.prepare(dashMediaSource);
     }
 
-//
-//    private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
-//        return new DefaultHttpDataSourceFactory(userAgent, bandwidthMeter);
+    //TODO CREATION OF THE DRM SESSION MANAGER
+    //currently this is pretty bad, starting to confuse myself with where this should be
+    private DrmSessionManager createDrm() {
+        String[] drmKeyRequestPropertiesList = new String[] {mVideo.authtoken};
+        Log.d("array", Arrays.toString(drmKeyRequestPropertiesList));
+        MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(mVideo.license, drmKeyRequestPropertiesList);
+
+        drmSessionManager =
+                new DefaultDrmSessionManager.Builder()
+                        .setUuidAndExoMediaDrmProvider(C.WIDEVINE_UUID, FrameworkMediaDrm.DEFAULT_PROVIDER)
+                        .setMultiSession(false)
+                        .build(multiTrustDrmCallback);
+
+        Log.d("TEST", "DRM BEING CREATED " + drmSessionManager.toString());
+
+        return drmSessionManager;
+    }
+
+
+//    TODO SWITCH STATEMENT FROM EXOPLAYER TO CHECK CONTENT TYPE ETC.
+//    private MediaSource createLeafMediaSource(
+//            Uri uri, String extension, DrmSessionManager<ExoMediaCrypto> drmSessionManager) {
+//        @C.ContentType int type = Util.inferContentType(uri, extension);
+//        switch (type) {
+//            case C.TYPE_DASH:
+//                return new DashMediaSource.Factory(dataSourceFactory)
+//                        .setDrmSessionManager(drmSessionManager)
+//                        .createMediaSource(uri);
+//            case C.TYPE_SS:
+//                return new SsMediaSource.Factory(dataSourceFactory)
+//                        .setDrmSessionManager(drmSessionManager)
+//                        .createMediaSource(uri);
+//            case C.TYPE_HLS:
+//                return new HlsMediaSource.Factory(dataSourceFactory)
+//                        .setDrmSessionManager(drmSessionManager)
+//                        .createMediaSource(uri);
+//            case C.TYPE_OTHER:
+//                return new ProgressiveMediaSource.Factory(dataSourceFactory)
+//                        .setDrmSessionManager(drmSessionManager)
+//                        .createMediaSource(uri);
+//            default:
+//                throw new IllegalStateException("Unsupported type: " + type);
+//        }
 //    }
-//
-//    private DataSource.Factory buildDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
-//        DefaultDataSourceFactory defaultDataSourceFactory = new DefaultDataSourceFactory(getContext(), bandwidthMeter,
-//                buildHttpDataSourceFactory(bandwidthMeter));
-//        return defaultDataSourceFactory;
-//    }
+
+
+    //would need this or something similar if I wanted to play drm content. NOTE: I have the 2 multitrust files here as this is the class
+    //that seems to handle creating the player.
+    //TODO Changed the String[] to String. (This could be cause a problem but I'm currently just testing)
+    private MultiTrustDrmCallback createMultiTrustDrmCallback(String licenseUrl, String[] keyRequestPropertiesArray){
+        MultiTrustHttpDataSource httpDataSource = new MultiTrustHttpDataSource(licenseUrl, keyRequestPropertiesArray[0]);
+        MultiTrustDrmCallback mtdrmCallback = new MultiTrustDrmCallback(httpDataSource);
+        return mtdrmCallback;
+    }
 
     private ArrayObjectAdapter initializeRelatedVideosRow() {
         /*

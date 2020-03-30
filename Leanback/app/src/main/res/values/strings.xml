@@ -39,11 +39,6 @@
 <!--    <string name="catalog_url">https://storage.googleapis.com/android-tv/android_tv_videos_new.json</string>-->
     <string name="catalog_url">https://raw.githubusercontent.com/EddieMc/JsonTest/master/content.json</string>
 
-<!--    https://urm.latens.com:6443/WvLicenseProxy33-->
-
-<!--    eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4R0NNIiwia2lkIjoiYWEwNjc5NWItY2Y4Yi00NjMxLTgwYzQtYWYzNjI0ZWE5OTk2IiwiaXNzIjoiQXJyaXMiLCJleHAiOiIxODg4NzE0MjkyMjI0IiwidmVyc2lvbiI6IjEifQo=.APdr1kjG30gFrRnglElQ-w==.bLHkLwBbcVf4yKWP2SIC3A==.Lx90pTB9d-ntVLA1CY-Eo1u9dc43b5tUEFHKYNQibTLYtapHHciK-yRWYSKufeY2Xvn2Qmc7Ic30XCfkWM5cDJLjPylvt2Tk0Q-7_atVtit1VWnQNlMStAHnbrO27mciTRTNGxt_OvFsQ0EvhHoaaUjDv5_XLv6eRdjVbmbl4i9YcjCPiUD6S9ftHVKT9pIR3Efts_fwvVsIbCtkm8aH82OmLUDdRYxuq0E=.cSe4ekm6dhwjaq7VPuqEuA==-->
-
-
     <!-- Error messages -->
 
     <string name="videos_loading_error">Failed to load videos. Please check your network connection.</string>
