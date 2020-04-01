@@ -106,6 +106,7 @@ public class PlaybackFragment extends VideoSupportFragment {
     private PlaylistActionListener mPlaylistActionListener;
     private DefaultBandwidthMeter mBandwidthMeter;
     private DrmSessionManager drmSessionManager;
+    private DataSource.Factory dataSourceFactory;
 
     private Video mVideo;
     private Playlist mPlaylist;
@@ -177,6 +178,7 @@ public class PlaybackFragment extends VideoSupportFragment {
         TrackSelection.Factory videoTrackSelectionFactory =
                 new AdaptiveTrackSelection.Factory(mBandwidthMeter);
         mTrackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
+        dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(),"ExoPlayer"));
 
         mPlayer = ExoPlayerFactory.newSimpleInstance(getActivity(), mTrackSelector);
         mPlayerAdapter = new LeanbackPlayerAdapter(getActivity(), mPlayer, UPDATE_DELAY);
@@ -211,14 +213,15 @@ public class PlaybackFragment extends VideoSupportFragment {
 
     private void prepareMediaForPlaying(Uri mediaSourceUri) {
 //        commented this part out and thinking of moving it around
-//        MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(VideoDbBuilder.TAG_LICENSE, VideoDbBuilder.TAG_AUTH_TOKEN);
 
         createDrm();
 
-        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(),"ExoPlayer"));
+//        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(),"ExoPlayer"));
 
 //        DashMediaSource dashMediaSource = new DashMediaSource(mediaSourceUri, dataSourceFactory,
 //                new DefaultDashChunkSource.Factory(dataSourceFactory), null, null);
+
+        mediaSourceType(mediaSourceUri, drmSessionManager);
 
         DashMediaSource dashMediaSource = new DashMediaSource.Factory(dataSourceFactory)
                         .setDrmSessionManager(drmSessionManager)
@@ -227,11 +230,12 @@ public class PlaybackFragment extends VideoSupportFragment {
         mPlayer.prepare(dashMediaSource);
     }
 
-    //TODO CREATION OF THE DRM SESSION MANAGER
-    //currently this is pretty bad, starting to confuse myself with where this should be
+    //TODO CREATION OF THE DRM SESSION MANAGER (needs fixing)
+    //currently this is pretty badly done. Created a local String[] to pass into my drmcallback with the token (token taken from json file)
+    //Also hard coding my uuid in the drm session manager
     private DrmSessionManager createDrm() {
         String[] drmKeyRequestPropertiesList = new String[] {mVideo.authtoken};
-        Log.d("array", Arrays.toString(drmKeyRequestPropertiesList));
+        Log.d("array", Arrays.toString(drmKeyRequestPropertiesList)); //testing
         MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(mVideo.license, drmKeyRequestPropertiesList);
 
         drmSessionManager =
@@ -246,36 +250,35 @@ public class PlaybackFragment extends VideoSupportFragment {
     }
 
 
-//    TODO SWITCH STATEMENT FROM EXOPLAYER TO CHECK CONTENT TYPE ETC.
-//    private MediaSource createLeafMediaSource(
-//            Uri uri, String extension, DrmSessionManager<ExoMediaCrypto> drmSessionManager) {
-//        @C.ContentType int type = Util.inferContentType(uri, extension);
-//        switch (type) {
-//            case C.TYPE_DASH:
-//                return new DashMediaSource.Factory(dataSourceFactory)
-//                        .setDrmSessionManager(drmSessionManager)
-//                        .createMediaSource(uri);
-//            case C.TYPE_SS:
-//                return new SsMediaSource.Factory(dataSourceFactory)
-//                        .setDrmSessionManager(drmSessionManager)
-//                        .createMediaSource(uri);
-//            case C.TYPE_HLS:
-//                return new HlsMediaSource.Factory(dataSourceFactory)
-//                        .setDrmSessionManager(drmSessionManager)
-//                        .createMediaSource(uri);
-//            case C.TYPE_OTHER:
-//                return new ProgressiveMediaSource.Factory(dataSourceFactory)
-//                        .setDrmSessionManager(drmSessionManager)
-//                        .createMediaSource(uri);
-//            default:
-//                throw new IllegalStateException("Unsupported type: " + type);
-//        }
-//    }
+//    TODO SWITCH STATEMENT FROM EXOPLAYER TO CHECK CONTENT TYPE, SET UP CORRECT MEDIA PLAYER FOR THAT TYPE
+    //Need to add an extension piece to the json file to determine what case should be taken.
+    //Will also need some sort of logic to set the extension string to one of the C.TYPE's
+    //currently I check the file extension to determine the media source.
+    private MediaSource mediaSourceType(
+            Uri uri, DrmSessionManager<ExoMediaCrypto> drmSessionManager) {
+        @C.ContentType int type = Util.inferContentType(mVideo.videoUrl); //checks the file extension to infer the type.
+        switch (type) {
+            case C.TYPE_DASH:
+                return new DashMediaSource.Factory(dataSourceFactory)
+                        .setDrmSessionManager(drmSessionManager)
+                        .createMediaSource(uri);
+            case C.TYPE_SS:
+                return new SsMediaSource.Factory(dataSourceFactory)
+                        .setDrmSessionManager(drmSessionManager)
+                        .createMediaSource(uri);
+            case C.TYPE_HLS:
+                return new HlsMediaSource.Factory(dataSourceFactory)
+                        .setDrmSessionManager(drmSessionManager)
+                        .createMediaSource(uri);
+            case C.TYPE_OTHER:
+                return new ProgressiveMediaSource.Factory(dataSourceFactory)
+                        .setDrmSessionManager(drmSessionManager)
+                        .createMediaSource(uri);
+            default:
+                throw new IllegalStateException("Unsupported type: " + type);
+        }
+    }
 
-
-    //would need this or something similar if I wanted to play drm content. NOTE: I have the 2 multitrust files here as this is the class
-    //that seems to handle creating the player.
-    //TODO Changed the String[] to String. (This could be cause a problem but I'm currently just testing)
     private MultiTrustDrmCallback createMultiTrustDrmCallback(String licenseUrl, String[] keyRequestPropertiesArray){
         MultiTrustHttpDataSource httpDataSource = new MultiTrustHttpDataSource(licenseUrl, keyRequestPropertiesArray[0]);
         MultiTrustDrmCallback mtdrmCallback = new MultiTrustDrmCallback(httpDataSource);
