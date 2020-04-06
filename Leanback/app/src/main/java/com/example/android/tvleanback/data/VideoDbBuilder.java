@@ -53,6 +53,7 @@ public class VideoDbBuilder {
     public static final String TAG_TITLE = "title";
     public static final String TAG_LICENSE = "license";
     public static final String TAG_AUTH_TOKEN = "authtoken";
+    public static final String TAG_DRM_SCHEME = "drmscheme";
 
     private static final String TAG = "VideoDbBuilder";
 
@@ -114,6 +115,7 @@ public class VideoDbBuilder {
                 String studio = video.optString(TAG_STUDIO);
                 String license = video.optString(TAG_LICENSE);
                 String authtoken = video.optString(TAG_AUTH_TOKEN);
+                String drmScheme = video.optString(TAG_DRM_SCHEME);
 
                 ContentValues videoValues = new ContentValues();
                 videoValues.put(VideoContract.VideoEntry.COLUMN_CATEGORY, categoryName);
@@ -125,6 +127,7 @@ public class VideoDbBuilder {
                 videoValues.put(VideoContract.VideoEntry.COLUMN_STUDIO, studio);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_LICENSE, license);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_AUTH_TOKEN, authtoken);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_DRM_SCHEME, drmScheme);
 
                 // Fixed defaults.
                 videoValues.put(VideoContract.VideoEntry.COLUMN_CONTENT_TYPE, "application/dash+xml");                        //

@@ -51,6 +51,7 @@ public class VideoDbHelper extends SQLiteOpenHelper {
                 VideoEntry.COLUMN_CARD_IMG + " TEXT NOT NULL, " +
                 VideoEntry.COLUMN_LICENSE + " TEXT, " +
                 VideoEntry.COLUMN_AUTH_TOKEN + " TEXT, " +
+                VideoEntry.COLUMN_DRM_SCHEME + " TEXT, " +
                 VideoEntry.COLUMN_CONTENT_TYPE + " TEXT NOT NULL, " +
                 VideoEntry.COLUMN_IS_LIVE + " INTEGER DEFAULT 0, " +
                 VideoEntry.COLUMN_VIDEO_WIDTH + " INTEGER NOT NULL, " +

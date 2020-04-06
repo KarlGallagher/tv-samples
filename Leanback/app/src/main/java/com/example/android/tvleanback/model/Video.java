@@ -34,6 +34,7 @@ public final class Video implements Parcelable {
     public final String studio;
     public final String license;
     public final String authtoken;
+    public final String drmScheme;
 
     private Video(
             final long id,
@@ -45,7 +46,8 @@ public final class Video implements Parcelable {
             final String cardImageUrl,
             final String studio,
             final String license,
-            final String authtoken) {
+            final String authtoken,
+            final String drmScheme) {
         this.id = id;
         this.category = category;
         this.title = title;
@@ -56,6 +58,7 @@ public final class Video implements Parcelable {
         this.studio = studio;
         this.license = license;
         this.authtoken = authtoken;
+        this.drmScheme = drmScheme;
     }
 
     protected Video(Parcel in) {
@@ -69,6 +72,7 @@ public final class Video implements Parcelable {
         studio = in.readString();
         license = in.readString();
         authtoken = in.readString();
+        drmScheme = in.readString();
     }
 
     public static final Creator<Video> CREATOR = new Creator<Video>() {
@@ -104,6 +108,7 @@ public final class Video implements Parcelable {
         dest.writeString(studio);
         dest.writeString(license);
         dest.writeString(authtoken);
+        dest.writeString(drmScheme);
     }
 
     @Override
@@ -118,6 +123,7 @@ public final class Video implements Parcelable {
         s += ", studio='" + cardImageUrl + "'";
         s += ", license='" + license +  "'";
         s += ", authtoken='" + authtoken +  "'";
+        s += ", drmscheme='" + drmScheme + "'";
         s += "}";
         return s;
     }
@@ -134,6 +140,7 @@ public final class Video implements Parcelable {
         private String studio;
         private String license;
         private String authtoken;
+        private String drmScheme;
 
         public VideoBuilder id(long id) {
             this.id = id;
@@ -185,6 +192,11 @@ public final class Video implements Parcelable {
             return this;
         }
 
+        public VideoBuilder drmScheme(String drmScheme){
+            this.drmScheme = drmScheme;
+            return this;
+        }
+
         public Video buildFromMediaDesc(MediaDescription desc) {
             return new Video(
                     Long.parseLong(desc.getMediaId()),
@@ -196,7 +208,8 @@ public final class Video implements Parcelable {
                     String.valueOf(desc.getIconUri()),
                     String.valueOf(desc.getSubtitle()),
                     "",
-                    ""); //not sure if I need the license here yet
+                    "",
+                    "");
         }
 
         public Video build() {
@@ -210,7 +223,8 @@ public final class Video implements Parcelable {
                     cardImageUrl,
                     studio,
                     license,
-                    authtoken);
+                    authtoken,
+                    drmScheme);
         }
     }
 }

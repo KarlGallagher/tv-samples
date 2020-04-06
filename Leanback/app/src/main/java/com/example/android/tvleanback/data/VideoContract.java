@@ -71,6 +71,8 @@ public final class VideoContract {
         //The Authorisation Token
         public static final String COLUMN_AUTH_TOKEN = "authtoken";
 
+        public static final String COLUMN_DRM_SCHEME = "drmscheme";
+
         // The card image for the video.
         public static final String COLUMN_CARD_IMG = SearchManager.SUGGEST_COLUMN_RESULT_CARD_IMAGE;
 

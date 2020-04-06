@@ -47,6 +47,7 @@ import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 
 import com.example.android.tvleanback.R;
+import com.example.android.tvleanback.Utils;
 import com.example.android.tvleanback.data.VideoContract;
 import com.example.android.tvleanback.data.VideoDbBuilder;
 import com.example.android.tvleanback.model.Playlist;
@@ -88,6 +89,7 @@ import com.google.android.exoplayer2.util.Util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.example.android.tvleanback.ui.PlaybackFragment.VideoLoaderCallbacks.RELATED_VIDEOS_LOADER;
 
@@ -107,6 +109,7 @@ public class PlaybackFragment extends VideoSupportFragment {
     private DefaultBandwidthMeter mBandwidthMeter;
     private DrmSessionManager drmSessionManager;
     private DataSource.Factory dataSourceFactory;
+//    private UUID drmScheme;
 
     private Video mVideo;
     private Playlist mPlaylist;
@@ -235,16 +238,13 @@ public class PlaybackFragment extends VideoSupportFragment {
     //Also hard coding my uuid in the drm session manager
     private DrmSessionManager createDrm() {
         String[] drmKeyRequestPropertiesList = new String[] {mVideo.authtoken};
-        Log.d("array", Arrays.toString(drmKeyRequestPropertiesList)); //testing
         MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(mVideo.license, drmKeyRequestPropertiesList);
 
         drmSessionManager =
                 new DefaultDrmSessionManager.Builder()
-                        .setUuidAndExoMediaDrmProvider(C.WIDEVINE_UUID, FrameworkMediaDrm.DEFAULT_PROVIDER)
+                        .setUuidAndExoMediaDrmProvider(setUUID(), FrameworkMediaDrm.DEFAULT_PROVIDER)
                         .setMultiSession(false)
                         .build(multiTrustDrmCallback);
-
-        Log.d("TEST", "DRM BEING CREATED " + drmSessionManager.toString());
 
         return drmSessionManager;
     }
@@ -253,7 +253,7 @@ public class PlaybackFragment extends VideoSupportFragment {
 //    TODO SWITCH STATEMENT FROM EXOPLAYER TO CHECK CONTENT TYPE, SET UP CORRECT MEDIA PLAYER FOR THAT TYPE
     //Need to add an extension piece to the json file to determine what case should be taken.
     //Will also need some sort of logic to set the extension string to one of the C.TYPE's
-    //currently I check the file extension to determine the media source.
+    //currently I check the file extension to determine the media source\.
     private MediaSource mediaSourceType(
             Uri uri, DrmSessionManager<ExoMediaCrypto> drmSessionManager) {
         @C.ContentType int type = Util.inferContentType(mVideo.videoUrl); //checks the file extension to infer the type.
@@ -276,6 +276,20 @@ public class PlaybackFragment extends VideoSupportFragment {
                         .createMediaSource(uri);
             default:
                 throw new IllegalStateException("Unsupported type: " + type);
+        }
+    }
+
+    //Set the UUID from the json file "drmscheme" value. If there is no value, the application will crash which isn't great
+    private UUID setUUID(){
+        if(mVideo.drmScheme.equals("widevine")){
+            return C.WIDEVINE_UUID;
+        }else if(mVideo.drmScheme.equals("playready")){
+            return C.PLAYREADY_UUID;
+        }else if(mVideo.drmScheme.equals("clearkey")){
+            return C.CLEARKEY_UUID;
+        }
+        else{
+            throw new IllegalStateException("Drm scheme is null or unsupported, " + mVideo.drmScheme);
         }
     }
 
