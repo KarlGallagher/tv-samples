@@ -177,7 +177,7 @@ public class VideoDbBuilder {
                 sb.append(line);
             }
             String json = sb.toString();
-            Log.d("TESTING", json);
+//            Log.d("TESTING", json);
             return new JSONObject(json);
         } finally {
             urlConnection.disconnect();

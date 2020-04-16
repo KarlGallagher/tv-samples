@@ -105,7 +105,7 @@ public class MultiTrustDrmCallback implements MediaDrmCallback {
       networkResponse = multiTrustHttp.postRequest(request.getData());
 
       if (networkResponse.first != 200) {
-        DataSpec dataSpec = new DataSpec(Uri.parse(multiTrustHttp.getProxyUrl())); //made the proxyUrl variable public (maybe add a getter instead)
+        DataSpec dataSpec = new DataSpec(Uri.parse(multiTrustHttp.getProxyUrl()));
 //        Log.d(TAG, "THIS IS THE RESPONSE ------" + networkResponse.first + " 2nd param " + new String(networkResponse.second) + " DATASPEC " + dataSpec);
         //Run through and debug what is happening. Need to see what exactly is happening with this
         throw new MultiTrustDrmException(networkResponse.first, new String(networkResponse.second), dataSpec);

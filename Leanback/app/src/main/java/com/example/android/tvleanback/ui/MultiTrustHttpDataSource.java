@@ -41,23 +41,11 @@ public class MultiTrustHttpDataSource {
    * @param payload The request body (from Widevine CDM)
    */
   Pair<Integer, byte[]> postRequest(byte[] payload) throws IOException {
-    //this might be wrong, test how this works although I'm never using the payload. Does this get set somewhere or should I be making claims?
     //TODO - replace throw with a working implementation
 
     URL url = new URL(proxyUrl);
     HttpURLConnection con = (HttpURLConnection)url.openConnection();
     setHttpPostHeaders(con);
-
-    //might need to embed it as an asset or download off the internet (Similar to the media.exolist.json)
-    //Dynamically have the content list instead of having it hard coded like the exolist in this application.
-    //Potential to have it with an already created list (Might have to make my own though)
-    //need buffered output stream
-    //leanback mode controlling functions with a remote rather than touch screen
-    //If as a leanback wont work on a phone.
-    //Figure out via the interface how do I make it so
-    //WHere does leanback get its content - will have to change the leanback app. WOn't be extensible. Swap out source of data for another
-    //Will use exoplayer but need to be configured with the multitrust stuff with toeksn etc
-    //Won't be the same token everytime etc from content list.
 
     //Need to do this myself mostly think methodically etc and present my findings.
 

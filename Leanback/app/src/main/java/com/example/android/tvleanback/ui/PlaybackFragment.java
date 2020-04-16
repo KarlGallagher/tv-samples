@@ -24,6 +24,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.leanback.app.VideoFragment;
 import androidx.leanback.app.VideoFragmentGlueHost;
@@ -56,15 +57,19 @@ import com.example.android.tvleanback.model.VideoCursorMapper;
 import com.example.android.tvleanback.player.VideoPlayerGlue;
 import com.example.android.tvleanback.presenter.CardPresenter;
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
+import com.google.android.exoplayer2.drm.DrmSession;
 import com.google.android.exoplayer2.drm.DrmSessionManager;
 import com.google.android.exoplayer2.drm.ExoMediaCrypto;
 import com.google.android.exoplayer2.drm.ExoMediaDrm;
 import com.google.android.exoplayer2.drm.FrameworkMediaDrm;
 import com.google.android.exoplayer2.ext.leanback.LeanbackPlayerAdapter;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer;
+import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
 import com.google.android.exoplayer2.offline.DownloadHelper;
 import com.google.android.exoplayer2.offline.DownloadRequest;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
@@ -78,12 +83,14 @@ import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
+import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
+import com.google.android.exoplayer2.util.ErrorMessageProvider;
 import com.google.android.exoplayer2.util.Util;
 
 import java.util.ArrayList;
@@ -109,7 +116,6 @@ public class PlaybackFragment extends VideoSupportFragment {
     private DefaultBandwidthMeter mBandwidthMeter;
     private DrmSessionManager drmSessionManager;
     private DataSource.Factory dataSourceFactory;
-//    private UUID drmScheme;
 
     private Video mVideo;
     private Playlist mPlaylist;
@@ -186,6 +192,7 @@ public class PlaybackFragment extends VideoSupportFragment {
         mPlayer = ExoPlayerFactory.newSimpleInstance(getActivity(), mTrackSelector);
         mPlayerAdapter = new LeanbackPlayerAdapter(getActivity(), mPlayer, UPDATE_DELAY);
         mPlaylistActionListener = new PlaylistActionListener(mPlaylist);
+        mPlayerAdapter.setErrorMessageProvider(new PlayerErrorMessageProvider());
         mPlayerGlue = new VideoPlayerGlue(getActivity(), mPlayerAdapter, mPlaylistActionListener);
         mPlayerGlue.setHost(new VideoSupportFragmentGlueHost(this));
         mPlayerGlue.playWhenPrepared();
@@ -210,34 +217,22 @@ public class PlaybackFragment extends VideoSupportFragment {
     private void play(Video video) {
         mPlayerGlue.setTitle(video.title);
         mPlayerGlue.setSubtitle(video.description);
+        //Need to create the Drm here otherwise the auth token will not change when the next/previous buttons are used causing an invalid token exception
+        createDrm(video);
         prepareMediaForPlaying(Uri.parse(video.videoUrl));
         mPlayerGlue.play();
     }
 
     private void prepareMediaForPlaying(Uri mediaSourceUri) {
-//        commented this part out and thinking of moving it around
-
-        createDrm();
-
-//        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(),"ExoPlayer"));
-
-//        DashMediaSource dashMediaSource = new DashMediaSource(mediaSourceUri, dataSourceFactory,
-//                new DefaultDashChunkSource.Factory(dataSourceFactory), null, null);
-
-        mediaSourceType(mediaSourceUri, drmSessionManager);
-
-        DashMediaSource dashMediaSource = new DashMediaSource.Factory(dataSourceFactory)
-                        .setDrmSessionManager(drmSessionManager)
-                        .createMediaSource(mediaSourceUri);
-
-        mPlayer.prepare(dashMediaSource);
+        mPlayer.prepare(mediaSourceType(mediaSourceUri, drmSessionManager));
     }
 
     //TODO CREATION OF THE DRM SESSION MANAGER (needs fixing)
     //currently this is pretty badly done. Created a local String[] to pass into my drmcallback with the token (token taken from json file)
     //Also hard coding my uuid in the drm session manager
-    private DrmSessionManager createDrm() {
-        String[] drmKeyRequestPropertiesList = new String[] {mVideo.authtoken};
+    public DrmSessionManager createDrm(Video video) {
+        String[] drmKeyRequestPropertiesList = new String[] {video.authtoken};
+//        String[] drmKeyRequestPropertiesList2 = new String[] {"test"}; **Used to test if the Multitrust Exception was working as intended**
         MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(mVideo.license, drmKeyRequestPropertiesList);
 
         drmSessionManager =
@@ -251,10 +246,8 @@ public class PlaybackFragment extends VideoSupportFragment {
 
 
 //    TODO SWITCH STATEMENT FROM EXOPLAYER TO CHECK CONTENT TYPE, SET UP CORRECT MEDIA PLAYER FOR THAT TYPE
-    //Need to add an extension piece to the json file to determine what case should be taken.
-    //Will also need some sort of logic to set the extension string to one of the C.TYPE's
-    //currently I check the file extension to determine the media source\.
-    private MediaSource mediaSourceType(
+    //currently I check the file extension to determine the media source.
+    public MediaSource mediaSourceType(
             Uri uri, DrmSessionManager<ExoMediaCrypto> drmSessionManager) {
         @C.ContentType int type = Util.inferContentType(mVideo.videoUrl); //checks the file extension to infer the type.
         switch (type) {
@@ -279,8 +272,8 @@ public class PlaybackFragment extends VideoSupportFragment {
         }
     }
 
-    //Set the UUID from the json file "drmscheme" value. If there is no value, the application will crash which isn't great
-    private UUID setUUID(){
+    //Set the UUID from the json file "drmscheme" value
+    public UUID setUUID(){
         if(mVideo.drmScheme.equals("widevine")){
             return C.WIDEVINE_UUID;
         }else if(mVideo.drmScheme.equals("playready")){
@@ -293,7 +286,7 @@ public class PlaybackFragment extends VideoSupportFragment {
         }
     }
 
-    private MultiTrustDrmCallback createMultiTrustDrmCallback(String licenseUrl, String[] keyRequestPropertiesArray){
+    public MultiTrustDrmCallback createMultiTrustDrmCallback(String licenseUrl, String[] keyRequestPropertiesArray){
         MultiTrustHttpDataSource httpDataSource = new MultiTrustHttpDataSource(licenseUrl, keyRequestPropertiesArray[0]);
         MultiTrustDrmCallback mtdrmCallback = new MultiTrustDrmCallback(httpDataSource);
         return mtdrmCallback;
@@ -451,6 +444,44 @@ public class PlaybackFragment extends VideoSupportFragment {
         @Override
         public void onNext() {
             play(mPlaylist.next());
+        }
+    }
+
+    private class PlayerErrorMessageProvider implements ErrorMessageProvider<ExoPlaybackException> {
+
+        @Override
+        public Pair<Integer, String> getErrorMessage(ExoPlaybackException e) {
+            String errorString = getString(R.string.error_generic);
+            if (e.type == ExoPlaybackException.TYPE_RENDERER) {
+                Exception cause = e.getRendererException();
+                if (cause instanceof MediaCodecRenderer.DecoderInitializationException) {
+                    // Special case for decoder initialization failures.
+                    MediaCodecRenderer.DecoderInitializationException decoderInitializationException =
+                            (MediaCodecRenderer.DecoderInitializationException) cause;
+                    if (decoderInitializationException.codecInfo == null) {
+                        if (decoderInitializationException.getCause() instanceof MediaCodecUtil.DecoderQueryException) {
+                            errorString = getString(R.string.error_querying_decoders);
+                        } else if (decoderInitializationException.secureDecoderRequired) {
+                            errorString = getString(R.string.error_no_secure_decoder, decoderInitializationException.mimeType);
+                        } else {
+                            errorString = getString(R.string.error_no_decoder, decoderInitializationException.mimeType);
+                        }
+                    } else {
+                        errorString = getString(R.string.error_no_secure_decoder, decoderInitializationException.codecInfo.mimeType);
+                    }
+                }
+            }
+            //not giving me the output I expect. Getting a large error message including http tags etc.
+            Exception cause = e.getSourceException();
+            if (cause instanceof DrmSession.DrmSessionException) {
+                Throwable underlyingCause = cause.getCause();
+                if (underlyingCause instanceof MultiTrustDrmException)
+                {
+                    errorString = ((MultiTrustDrmException)underlyingCause).error;
+                }
+            }
+            Log.d("MultiTrustDrmException", "Player activity error" + errorString);
+            return Pair.create(0, errorString);
         }
     }
 }
