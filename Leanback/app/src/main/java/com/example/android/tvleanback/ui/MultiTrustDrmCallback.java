@@ -95,9 +95,6 @@ public class MultiTrustDrmCallback implements MediaDrmCallback {
   @Override
   public byte[] executeKeyRequest(UUID uuid, ExoMediaDrm.KeyRequest request) throws Exception {
     //TODO - replace return empty with working implementation
-//    String url = request.getLicenseServerUrl(); //Doing this was getting url = "" (stepping through debug)
-//    String url = "https://urm.latens.com:6443/WvLicenseProxy33";
-
     try {
       Pair<Integer, byte[]> networkResponse;
       //byte array

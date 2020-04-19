@@ -17,6 +17,7 @@
 package com.example.android.tvleanback.ui;
 
 import android.annotation.TargetApi;
+import android.app.Application;
 import android.content.Intent;
 import android.database.Cursor;
 import android.media.MediaDrm;
@@ -25,6 +26,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
+import android.widget.Toast;
 
 import androidx.leanback.app.VideoFragment;
 import androidx.leanback.app.VideoFragmentGlueHost;
@@ -215,12 +217,26 @@ public class PlaybackFragment extends VideoSupportFragment {
     }
 
     private void play(Video video) {
-        mPlayerGlue.setTitle(video.title);
-        mPlayerGlue.setSubtitle(video.description);
-        //Need to create the Drm here otherwise the auth token will not change when the next/previous buttons are used causing an invalid token exception
-        createDrm(video);
-        prepareMediaForPlaying(Uri.parse(video.videoUrl));
-        mPlayerGlue.play();
+        //potentially put in some form of conditional statement here so as to
+        //stop the application from crashing on next/previous although maybe putting the
+        //conditional in the onNext() or onPrevious() is a better idea. NEED TO FIX THIS
+
+        if(video==null) {
+            Intent intent = new Intent(getActivity(), MainActivity.class);
+            getActivity().startActivity(intent);
+            Toast.makeText(getContext(), "No next or previous video. Returned to main menu", Toast.LENGTH_SHORT).show();
+            getActivity().finish();
+        }else {
+//        Log.d("title", video.title);
+
+            mPlayerGlue.setTitle(video.title);
+            mPlayerGlue.setSubtitle(video.description);
+
+            //Need to create the Drm here otherwise the auth token will not change when the next/previous buttons are used causing an invalid token exception
+            createDrm(video);
+            prepareMediaForPlaying(Uri.parse(video.videoUrl));
+            mPlayerGlue.play();
+        }
     }
 
     private void prepareMediaForPlaying(Uri mediaSourceUri) {
@@ -228,8 +244,6 @@ public class PlaybackFragment extends VideoSupportFragment {
     }
 
     //TODO CREATION OF THE DRM SESSION MANAGER (needs fixing)
-    //currently this is pretty badly done. Created a local String[] to pass into my drmcallback with the token (token taken from json file)
-    //Also hard coding my uuid in the drm session manager
     public DrmSessionManager createDrm(Video video) {
         String[] drmKeyRequestPropertiesList = new String[] {video.authtoken};
 //        String[] drmKeyRequestPropertiesList2 = new String[] {"test"}; **Used to test if the Multitrust Exception was working as intended**

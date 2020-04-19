@@ -43,7 +43,7 @@ import javax.net.ssl.HttpsURLConnection;
  */
 public class VideoDbBuilder {
     public static final String TAG_MEDIA = "videos";
-    public static final String TAG_GOOGLE_VIDEOS = "googlevideos";
+    public static final String TAG_MT_VIDEOS = "multitrustvideos";
     public static final String TAG_CATEGORY = "category";
     public static final String TAG_STUDIO = "studio";
     public static final String TAG_SOURCES = "sources";
@@ -87,7 +87,7 @@ public class VideoDbBuilder {
      */
     public List<ContentValues> buildMedia(JSONObject jsonObj) throws JSONException {
 
-        JSONArray categoryArray = jsonObj.getJSONArray(TAG_GOOGLE_VIDEOS);
+        JSONArray categoryArray = jsonObj.getJSONArray(TAG_MT_VIDEOS);
         List<ContentValues> videosToInsert = new ArrayList<>();
 
         for (int i = 0; i < categoryArray.length(); i++) {
