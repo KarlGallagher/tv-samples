@@ -15,7 +15,7 @@
      limitations under the License.
 -->
 
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name"><![CDATA[Videos by Google]]></string>
     <string name="browse_title"><![CDATA[Videos by Google]]></string>
     <string name="related_movies">Related Videos</string>
@@ -36,7 +36,8 @@
 
     <string name="search_results">Search results for \'%1$s\'</string>
     <string name="no_search_results">No search results found for \'%1$s\'</string>
-    <string name="catalog_url">https://storage.googleapis.com/android-tv/android_tv_videos_new.json</string>
+<!--    <string name="catalog_url">https://storage.googleapis.com/android-tv/android_tv_videos_new.json</string>-->
+    <string name="catalog_url">https://raw.githubusercontent.com/EddieMc/JsonTest/master/content.json</string>
 
     <!-- Error messages -->
 
@@ -122,4 +123,10 @@
     <string name="pref_key_login">pref_login</string>
     <string name="pref_title_login">Login</string>
     <string name="playback_tag">PLAYBACK_TAG</string>
+
+    <string name="error_generic">Playback has failed</string>
+    <string name="error_querying_decoders">Error querying device decoders</string>
+    <string name="error_no_secure_decoder">This device does not provide a secure decoder for <xliff:g id="mime_type">%1$s</xliff:g></string>
+    <string name="error_no_decoder">This device does not provide a decoder for <xliff:g id="mime_type">%1$s</xliff:g></string>
+    <string name="error_instantiating_decoder">Unable to instantiate decoder <xliff:g id="decoder_name">%1$s</xliff:g></string>
 </resources>

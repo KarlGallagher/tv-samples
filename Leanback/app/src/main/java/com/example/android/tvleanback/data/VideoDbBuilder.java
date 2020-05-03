@@ -22,6 +22,7 @@ import androidx.annotation.NonNull;
 import android.util.Log;
 
 import com.example.android.tvleanback.R;
+import com.example.android.tvleanback.model.Video;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,7 +43,7 @@ import javax.net.ssl.HttpsURLConnection;
  */
 public class VideoDbBuilder {
     public static final String TAG_MEDIA = "videos";
-    public static final String TAG_GOOGLE_VIDEOS = "googlevideos";
+    public static final String TAG_MT_VIDEOS = "multitrustvideos";
     public static final String TAG_CATEGORY = "category";
     public static final String TAG_STUDIO = "studio";
     public static final String TAG_SOURCES = "sources";
@@ -50,6 +51,9 @@ public class VideoDbBuilder {
     public static final String TAG_CARD_THUMB = "card";
     public static final String TAG_BACKGROUND = "background";
     public static final String TAG_TITLE = "title";
+    public static final String TAG_LICENSE = "license";
+    public static final String TAG_AUTH_TOKEN = "authtoken";
+    public static final String TAG_DRM_SCHEME = "drmscheme";
 
     private static final String TAG = "VideoDbBuilder";
 
@@ -83,7 +87,7 @@ public class VideoDbBuilder {
      */
     public List<ContentValues> buildMedia(JSONObject jsonObj) throws JSONException {
 
-        JSONArray categoryArray = jsonObj.getJSONArray(TAG_GOOGLE_VIDEOS);
+        JSONArray categoryArray = jsonObj.getJSONArray(TAG_MT_VIDEOS);
         List<ContentValues> videosToInsert = new ArrayList<>();
 
         for (int i = 0; i < categoryArray.length(); i++) {
@@ -98,6 +102,7 @@ public class VideoDbBuilder {
 
                 // If there are no URLs, skip this video entry.
                 JSONArray urls = video.optJSONArray(TAG_SOURCES);
+//                JSONArray urls = new JSONArray().put("https://urm.latens.com:9443/content/dash_clr/out.mpd");
                 if (urls == null || urls.length() == 0) {
                     continue;
                 }
@@ -108,6 +113,9 @@ public class VideoDbBuilder {
                 String bgImageUrl = video.optString(TAG_BACKGROUND);
                 String cardImageUrl = video.optString(TAG_CARD_THUMB);
                 String studio = video.optString(TAG_STUDIO);
+                String license = video.optString(TAG_LICENSE);
+                String authtoken = video.optString(TAG_AUTH_TOKEN);
+                String drmScheme = video.optString(TAG_DRM_SCHEME);
 
                 ContentValues videoValues = new ContentValues();
                 videoValues.put(VideoContract.VideoEntry.COLUMN_CATEGORY, categoryName);
@@ -117,9 +125,12 @@ public class VideoDbBuilder {
                 videoValues.put(VideoContract.VideoEntry.COLUMN_CARD_IMG, cardImageUrl);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_BG_IMAGE_URL, bgImageUrl);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_STUDIO, studio);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_LICENSE, license);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_AUTH_TOKEN, authtoken);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_DRM_SCHEME, drmScheme);
 
                 // Fixed defaults.
-                videoValues.put(VideoContract.VideoEntry.COLUMN_CONTENT_TYPE, "video/mp4");
+                videoValues.put(VideoContract.VideoEntry.COLUMN_CONTENT_TYPE, "application/dash+xml");                        //
                 videoValues.put(VideoContract.VideoEntry.COLUMN_IS_LIVE, false);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_AUDIO_CHANNEL_CONFIG, "2.0");
                 videoValues.put(VideoContract.VideoEntry.COLUMN_PRODUCTION_YEAR, 2014);
@@ -166,6 +177,7 @@ public class VideoDbBuilder {
                 sb.append(line);
             }
             String json = sb.toString();
+//            Log.d("TESTING", json);
             return new JSONObject(json);
         } finally {
             urlConnection.disconnect();

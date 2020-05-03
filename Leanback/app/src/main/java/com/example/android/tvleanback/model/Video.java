@@ -32,6 +32,9 @@ public final class Video implements Parcelable {
     public final String cardImageUrl;
     public final String videoUrl;
     public final String studio;
+    public final String license;
+    public final String authtoken;
+    public final String drmScheme;
 
     private Video(
             final long id,
@@ -41,7 +44,10 @@ public final class Video implements Parcelable {
             final String videoUrl,
             final String bgImageUrl,
             final String cardImageUrl,
-            final String studio) {
+            final String studio,
+            final String license,
+            final String authtoken,
+            final String drmScheme) {
         this.id = id;
         this.category = category;
         this.title = title;
@@ -50,6 +56,9 @@ public final class Video implements Parcelable {
         this.bgImageUrl = bgImageUrl;
         this.cardImageUrl = cardImageUrl;
         this.studio = studio;
+        this.license = license;
+        this.authtoken = authtoken;
+        this.drmScheme = drmScheme;
     }
 
     protected Video(Parcel in) {
@@ -61,6 +70,9 @@ public final class Video implements Parcelable {
         cardImageUrl = in.readString();
         videoUrl = in.readString();
         studio = in.readString();
+        license = in.readString();
+        authtoken = in.readString();
+        drmScheme = in.readString();
     }
 
     public static final Creator<Video> CREATOR = new Creator<Video>() {
@@ -94,6 +106,9 @@ public final class Video implements Parcelable {
         dest.writeString(cardImageUrl);
         dest.writeString(videoUrl);
         dest.writeString(studio);
+        dest.writeString(license);
+        dest.writeString(authtoken);
+        dest.writeString(drmScheme);
     }
 
     @Override
@@ -106,6 +121,9 @@ public final class Video implements Parcelable {
         s += ", bgImageUrl='" + bgImageUrl + "'";
         s += ", cardImageUrl='" + cardImageUrl + "'";
         s += ", studio='" + cardImageUrl + "'";
+        s += ", license='" + license +  "'";
+        s += ", authtoken='" + authtoken +  "'";
+        s += ", drmscheme='" + drmScheme + "'";
         s += "}";
         return s;
     }
@@ -120,6 +138,9 @@ public final class Video implements Parcelable {
         private String cardImageUrl;
         private String videoUrl;
         private String studio;
+        private String license;
+        private String authtoken;
+        private String drmScheme;
 
         public VideoBuilder id(long id) {
             this.id = id;
@@ -161,6 +182,21 @@ public final class Video implements Parcelable {
             return this;
         }
 
+        public VideoBuilder license(String license) {
+            this.license = license;
+            return this;
+        }
+
+        public VideoBuilder authtoken(String authtoken){
+            this.authtoken = authtoken;
+            return this;
+        }
+
+        public VideoBuilder drmScheme(String drmScheme){
+            this.drmScheme = drmScheme;
+            return this;
+        }
+
         public Video buildFromMediaDesc(MediaDescription desc) {
             return new Video(
                     Long.parseLong(desc.getMediaId()),
@@ -170,8 +206,10 @@ public final class Video implements Parcelable {
                     "", // Media URI - not provided by MediaDescription.
                     "", // Background Image URI - not provided by MediaDescription.
                     String.valueOf(desc.getIconUri()),
-                    String.valueOf(desc.getSubtitle())
-            );
+                    String.valueOf(desc.getSubtitle()),
+                    "",
+                    "",
+                    "");
         }
 
         public Video build() {
@@ -183,8 +221,10 @@ public final class Video implements Parcelable {
                     videoUrl,
                     bgImageUrl,
                     cardImageUrl,
-                    studio
-            );
+                    studio,
+                    license,
+                    authtoken,
+                    drmScheme);
         }
     }
 }

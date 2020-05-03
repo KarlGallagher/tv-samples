@@ -145,7 +145,7 @@ public class VideoDbIntegrationTest {
         JSONObject myMedia = new JSONObject();
         JSONArray mediaCategories = new JSONArray();
         mediaCategories.put(myMediaGooglePlus);
-        myMedia.put(VideoDbBuilder.TAG_GOOGLE_VIDEOS, mediaCategories);
+        myMedia.put(VideoDbBuilder.TAG_MT_VIDEOS, mediaCategories);
 
         VideoDbBuilder videoDbBuilder = new VideoDbBuilder(mContext);
         List<ContentValues> contentValuesList = videoDbBuilder.buildMedia(myMedia);

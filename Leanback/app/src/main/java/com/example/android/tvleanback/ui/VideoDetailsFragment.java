@@ -347,10 +347,10 @@ public class VideoDetailsFragment extends DetailsSupportFragment
         adapter.set(ACTION_WATCH_TRAILER, new Action(ACTION_WATCH_TRAILER, getResources()
                 .getString(R.string.watch_trailer_1),
                 getResources().getString(R.string.watch_trailer_2)));
-        adapter.set(ACTION_RENT, new Action(ACTION_RENT, getResources().getString(R.string.rent_1),
-                getResources().getString(R.string.rent_2)));
-        adapter.set(ACTION_BUY, new Action(ACTION_BUY, getResources().getString(R.string.buy_1),
-                getResources().getString(R.string.buy_2)));
+//        adapter.set(ACTION_RENT, new Action(ACTION_RENT, getResources().getString(R.string.rent_1),
+//                getResources().getString(R.string.rent_2)));
+//        adapter.set(ACTION_BUY, new Action(ACTION_BUY, getResources().getString(R.string.buy_1),
+//                getResources().getString(R.string.buy_2)));
         row.setActionsAdapter(adapter);
 
         mAdapter.add(row);

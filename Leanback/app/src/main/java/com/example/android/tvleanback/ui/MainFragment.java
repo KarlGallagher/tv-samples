@@ -280,15 +280,15 @@ public class MainFragment extends BrowseSupportFragment
                 }
 
                 // Create a row for this special case with more samples.
-                HeaderItem gridHeader = new HeaderItem(getString(R.string.more_samples));
-                GridItemPresenter gridPresenter = new GridItemPresenter(this);
-                ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(gridPresenter);
-                gridRowAdapter.add(getString(R.string.grid_view));
-                gridRowAdapter.add(getString(R.string.guidedstep_first_title));
-                gridRowAdapter.add(getString(R.string.error_fragment));
-                gridRowAdapter.add(getString(R.string.personal_settings));
-                ListRow row = new ListRow(gridHeader, gridRowAdapter);
-                mCategoryRowAdapter.add(row);
+//                HeaderItem gridHeader = new HeaderItem(getString(R.string.more_samples));
+//                GridItemPresenter gridPresenter = new GridItemPresenter(this);
+//                ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(gridPresenter);
+//                gridRowAdapter.add(getString(R.string.grid_view));
+//                gridRowAdapter.add(getString(R.string.guidedstep_first_title));
+//                gridRowAdapter.add(getString(R.string.error_fragment));
+//                gridRowAdapter.add(getString(R.string.personal_settings));
+//                ListRow row = new ListRow(gridHeader, gridRowAdapter);
+//                mCategoryRowAdapter.add(row);
 
                 startEntranceTransition(); // TODO: Move startEntranceTransition to after all
                 // cursors have loaded.
@@ -338,36 +338,36 @@ public class MainFragment extends BrowseSupportFragment
                         ((ImageCardView) itemViewHolder.view).getMainImageView(),
                         VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
                 getActivity().startActivity(intent, bundle);
-            } else if (item instanceof String) {
-                if (((String) item).contains(getString(R.string.grid_view))) {
-                    Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
-                    Bundle bundle =
-                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-                                    .toBundle();
-                    startActivity(intent, bundle);
-                } else if (((String) item).contains(getString(R.string.guidedstep_first_title))) {
-                    Intent intent = new Intent(getActivity(), GuidedStepActivity.class);
-                    Bundle bundle =
-                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-                                    .toBundle();
-                    startActivity(intent, bundle);
-                } else if (((String) item).contains(getString(R.string.error_fragment))) {
-                    BrowseErrorFragment errorFragment = new BrowseErrorFragment();
-                    getFragmentManager().beginTransaction().replace(R.id.main_frame, errorFragment)
-                            .addToBackStack(null).commit();
-                } else if(((String) item).contains(getString(R.string.personal_settings))) {
-                    Intent intent = new Intent(getActivity(), SettingsActivity.class);
-                    Bundle bundle =
-                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-                                    .toBundle();
-                    startActivity(intent, bundle);
+//            } else if (item instanceof String) {
+//                if (((String) item).contains(getString(R.string.grid_view))) {
+//                    Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
+//                    Bundle bundle =
+//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+//                                    .toBundle();
+//                    startActivity(intent, bundle);
+//                } else if (((String) item).contains(getString(R.string.guidedstep_first_title))) {
+//                    Intent intent = new Intent(getActivity(), GuidedStepActivity.class);
+//                    Bundle bundle =
+//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+//                                    .toBundle();
+//                    startActivity(intent, bundle);
+//                } else if (((String) item).contains(getString(R.string.error_fragment))) {
+//                    BrowseErrorFragment errorFragment = new BrowseErrorFragment();
+//                    getFragmentManager().beginTransaction().replace(R.id.main_frame, errorFragment)
+//                            .addToBackStack(null).commit();
+//                } else if(((String) item).contains(getString(R.string.personal_settings))) {
+//                    Intent intent = new Intent(getActivity(), SettingsActivity.class);
+//                    Bundle bundle =
+//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+//                                    .toBundle();
+//                    startActivity(intent, bundle);
                 } else {
                     Toast.makeText(getActivity(), ((String) item), Toast.LENGTH_SHORT)
                             .show();
                 }
             }
         }
-    }
+//    }
 
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
         @Override
