@@ -20,8 +20,8 @@
 
     <ImageView
         android:id="@+id/header_icon"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="65dp"
+        android:layout_height="52dp"
         android:contentDescription="@string/header_icon" />
 
     <TextView

@@ -37,25 +37,46 @@ import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
+class TMDbInfo {
+    public String description;
+    public String backgroundUrl;
+    public String posterUrl;
+    public String releaseYear;
+    public Double averageVote;
+
+}
+
 /**
  * The VideoDbBuilder is used to grab a JSON file from a server and parse the data
  * to be placed into a local database
  */
 public class VideoDbBuilder {
-    public static final String TAG_MEDIA = "videos";
+    public static final String TAG_MEDIA = "streams";
     public static final String TAG_MT_VIDEOS = "multitrustvideos";
     public static final String TAG_CATEGORY = "category";
     public static final String TAG_STUDIO = "studio";
-    public static final String TAG_SOURCES = "sources";
+    public static final String TAG_SOURCES = "dash_address";
     public static final String TAG_DESCRIPTION = "description";
     public static final String TAG_CARD_THUMB = "card";
     public static final String TAG_BACKGROUND = "background";
-    public static final String TAG_TITLE = "title";
-    public static final String TAG_LICENSE = "license";
-    public static final String TAG_AUTH_TOKEN = "authtoken";
-    public static final String TAG_DRM_SCHEME = "drmscheme";
+    public static final String TAG_TITLE = "name";
+    public static final String TAG_LICENSE = "wv_license_proxy";
+    public static final String TAG_AUTH_TOKEN = "token";
+    public static final String TAG_DRM_SCHEME = "drm_type";
+    public static final String TAG_FORMAT = "stream_format";
 
     private static final String TAG = "VideoDbBuilder";
+
+    /**TMDB consts */
+    private static final String TAG_TMDB_RESULTS = "results";
+    private static final String TAG_TMDB_VOTE = "vote_average";
+    private static final String TAG_TMDB_BACKGROUND_ART = "backdrop_path";
+    private static final String TAG_TMDB_POSTER_ART = "poster_path";
+    private static final String TAG_TMDB_DESCRIPTION = "overview";
+    private static final String TAG_TMDB_RELEASE_DATE = "release_date";
+    private static final String TMDB_POSTER_BASE_PATH =  "https://image.tmdb.org/t/p/w500";
+    private static final String TMDB_BACKDROP_BASE_PATH =  "https://image.tmdb.org/t/p/original";
+    private static final String TMDB_SEARCH_URL  = "https://api.themoviedb.org/3/search/movie?api_key=0f99c73a164f775c5a0e060a16cd9c76";
 
     private Context mContext;
 
@@ -85,37 +106,42 @@ public class VideoDbBuilder {
      * @param jsonObj The JSON object of videos
      * @throws JSONException if the JSON object is invalid
      */
-    public List<ContentValues> buildMedia(JSONObject jsonObj) throws JSONException {
+    public List<ContentValues> buildMedia(JSONObject jsonObj) throws JSONException, IOException {
 
-        JSONArray categoryArray = jsonObj.getJSONArray(TAG_MT_VIDEOS);
+        //JSONArray categoryArray = jsonObj.getJSONArray(TAG_MT_VIDEOS);
         List<ContentValues> videosToInsert = new ArrayList<>();
 
-        for (int i = 0; i < categoryArray.length(); i++) {
-            JSONArray videoArray;
+        //for (int i = 0; i < categoryArray.length(); i++) {
+            //JSONArray videoArray;
 
-            JSONObject category = categoryArray.getJSONObject(i);
-            String categoryName = category.getString(TAG_CATEGORY);
-            videoArray = category.getJSONArray(TAG_MEDIA);
+            //JSONObject category = categoryArray.getJSONObject(i);
+           // String categoryName = category.getString(TAG_CATEGORY);
+            String categoryName = "MultiTrust VOD";
+            //videoArray = category.getJSONArray(TAG_MEDIA);
+            JSONArray videoArray = jsonObj.getJSONArray(TAG_MEDIA);
 
-            for (int j = 0; j < videoArray.length(); j++) {
+
+        for (int j = 0; j < videoArray.length(); j++) {
                 JSONObject video = videoArray.getJSONObject(j);
 
-                // If there are no URLs, skip this video entry.
-                JSONArray urls = video.optJSONArray(TAG_SOURCES);
-//                JSONArray urls = new JSONArray().put("https://urm.latens.com:9443/content/dash_clr/out.mpd");
-                if (urls == null || urls.length() == 0) {
+                String format = video.optString(TAG_FORMAT);
+
+                if (!format.equals("dash")){
                     continue;
                 }
 
                 String title = video.optString(TAG_TITLE);
-                String description = video.optString(TAG_DESCRIPTION);
-                String videoUrl = (String) urls.get(0); // Get the first video only.
-                String bgImageUrl = video.optString(TAG_BACKGROUND);
-                String cardImageUrl = video.optString(TAG_CARD_THUMB);
+                TMDbInfo tmdb_video_info = fetchMovieInfo(title);
+
+                String description = video.optString(TAG_DESCRIPTION) + "\n" + tmdb_video_info.description;
+                String videoUrl = video.optString(TAG_SOURCES);
+                String bgImageUrl = tmdb_video_info.backgroundUrl;
+                String cardImageUrl = tmdb_video_info.posterUrl;
                 String studio = video.optString(TAG_STUDIO);
                 String license = video.optString(TAG_LICENSE);
                 String authtoken = video.optString(TAG_AUTH_TOKEN);
-                String drmScheme = video.optString(TAG_DRM_SCHEME);
+                String drmScheme = "widevine";
+
 
                 ContentValues videoValues = new ContentValues();
                 videoValues.put(VideoContract.VideoEntry.COLUMN_CATEGORY, categoryName);
@@ -133,11 +159,10 @@ public class VideoDbBuilder {
                 videoValues.put(VideoContract.VideoEntry.COLUMN_CONTENT_TYPE, "application/dash+xml");                        //
                 videoValues.put(VideoContract.VideoEntry.COLUMN_IS_LIVE, false);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_AUDIO_CHANNEL_CONFIG, "2.0");
-                videoValues.put(VideoContract.VideoEntry.COLUMN_PRODUCTION_YEAR, 2014);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_PRODUCTION_YEAR, tmdb_video_info.releaseYear);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_DURATION, 0);
-                videoValues.put(VideoContract.VideoEntry.COLUMN_RATING_STYLE,
-                        Rating.RATING_5_STARS);
-                videoValues.put(VideoContract.VideoEntry.COLUMN_RATING_SCORE, 3.5f);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_RATING_STYLE, Rating.RATING_THUMB_UP_DOWN);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_RATING_SCORE, tmdb_video_info.averageVote);
                 if (mContext != null) {
                     videoValues.put(VideoContract.VideoEntry.COLUMN_PURCHASE_PRICE,
                             mContext.getResources().getString(R.string.buy_2));
@@ -153,8 +178,44 @@ public class VideoDbBuilder {
 
                 videosToInsert.add(videoValues);
             }
-        }
+        //}
         return videosToInsert;
+    }
+
+    /**
+     * Fetch JSON movie info from TMDB
+     *
+     * @return the TMDbInfo mapped from JSON response
+     * @throws JSONException
+     * @throws IOException
+     */
+    private TMDbInfo fetchMovieInfo(String movie) throws JSONException, IOException {
+        TMDbInfo tmdb = new TMDbInfo();
+        String url  = TMDB_SEARCH_URL + "&query=" + movie;
+        JSONObject info = fetchJSON(url);
+
+        JSONArray results = info.getJSONArray(TAG_TMDB_RESULTS);
+
+        for (int j = 0; j < results.length(); j++) {
+            JSONObject result = results.getJSONObject(j);
+            tmdb.description = result.optString(TAG_TMDB_DESCRIPTION);
+            tmdb.backgroundUrl = TMDB_BACKDROP_BASE_PATH + result.optString(TAG_TMDB_BACKGROUND_ART);
+            tmdb.posterUrl = TMDB_POSTER_BASE_PATH + result.optString(TAG_TMDB_POSTER_ART);
+
+            //leanback wants year only but TMDB returns yyyy-mm-dd
+            tmdb.releaseYear = result.optString(TAG_TMDB_RELEASE_DATE).split("-")[0];
+
+            try {
+                tmdb.averageVote = Double.valueOf(result.optString(TAG_TMDB_VOTE));
+            }
+            catch (NullPointerException e) {
+                tmdb.averageVote = 5.0;
+            }
+            //only care about first result
+            break;
+        }
+
+        return tmdb;
     }
 
     /**

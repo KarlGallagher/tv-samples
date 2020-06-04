@@ -17,7 +17,9 @@
 package com.example.android.tvleanback.ui;
 
 import android.annotation.TargetApi;
+import android.app.AlertDialog;
 import android.app.Application;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.media.MediaDrm;
@@ -59,9 +61,15 @@ import com.example.android.tvleanback.model.VideoCursorMapper;
 import com.example.android.tvleanback.player.VideoPlayerGlue;
 import com.example.android.tvleanback.presenter.CardPresenter;
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.database.DatabaseProvider;
+import com.google.android.exoplayer2.database.ExoDatabaseProvider;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
 import com.google.android.exoplayer2.drm.DrmSession;
 import com.google.android.exoplayer2.drm.DrmSessionManager;
@@ -91,10 +99,18 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy;
+import com.google.android.exoplayer2.upstream.FileDataSource;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
+import com.google.android.exoplayer2.upstream.cache.Cache;
+import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
+import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
+import com.google.android.exoplayer2.upstream.cache.NoOpCacheEvictor;
+import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.google.android.exoplayer2.util.ErrorMessageProvider;
 import com.google.android.exoplayer2.util.Util;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -115,9 +131,8 @@ public class PlaybackFragment extends VideoSupportFragment {
     private SimpleExoPlayer mPlayer;
     private TrackSelector mTrackSelector;
     private PlaylistActionListener mPlaylistActionListener;
-    private DefaultBandwidthMeter mBandwidthMeter;
     private DrmSessionManager drmSessionManager;
-    private DataSource.Factory dataSourceFactory;
+
 
     private Video mVideo;
     private Playlist mPlaylist;
@@ -130,10 +145,12 @@ public class PlaybackFragment extends VideoSupportFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        userAgent = Util.getUserAgent(getContext(), "TVsample");
+        userAgent = Util.getUserAgent(getActivity(), "MultiTrustAndroidDemo");
 
         mVideo = getActivity().getIntent().getParcelableExtra(VideoDetailsActivity.VIDEO);
         mPlaylist = new Playlist();
+
+
 
         mVideoLoaderCallbacks = new VideoLoaderCallbacks(mPlaylist);
 
@@ -184,14 +201,78 @@ public class PlaybackFragment extends VideoSupportFragment {
         }
     }
 
-    private void initializePlayer() {
-        mBandwidthMeter = new DefaultBandwidthMeter();
-        TrackSelection.Factory videoTrackSelectionFactory =
-                new AdaptiveTrackSelection.Factory(mBandwidthMeter);
-        mTrackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
-        dataSourceFactory = new DefaultDataSourceFactory(getContext(), Util.getUserAgent(getContext(),"ExoPlayer"));
+    @Override
+    protected void onError(int errorCode, CharSequence errorMessage) {
+        Log.d("Error", "Playback error" + errorMessage.toString() );
 
-        mPlayer = ExoPlayerFactory.newSimpleInstance(getActivity(), mTrackSelector);
+        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+        alert.setTitle("Playback Error");
+
+        alert.setNegativeButton("Exit", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                    dialog.dismiss();
+                }
+            });
+        alert.setMessage(errorMessage);
+        alert.show();
+
+}
+
+
+        /** Returns a {@link DataSource.Factory}. */
+    private DataSource.Factory buildDataSourceFactory() {
+        DefaultDataSourceFactory upstreamFactory =
+                new DefaultDataSourceFactory(getActivity(), buildHttpDataSourceFactory());
+        return buildReadOnlyCacheDataSource(upstreamFactory, ((MultiTrustDemo)getActivity().getApplication()).getDownloadCache());
+    }
+
+    /** Returns a {@link HttpDataSource.Factory}. */
+    private HttpDataSource.Factory buildHttpDataSourceFactory() {
+        return new DefaultHttpDataSourceFactory(userAgent);
+    }
+
+    private static CacheDataSourceFactory buildReadOnlyCacheDataSource(
+            DataSource.Factory upstreamFactory, Cache cache) {
+        return new CacheDataSourceFactory(
+                cache,
+                upstreamFactory,
+                new FileDataSource.Factory(),
+                /* cacheWriteDataSinkFactory= */ null,
+                CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR,
+                /* eventListener= */ null);
+    }
+
+    private TrackSelector buildTrackSelector() {
+        DefaultTrackSelector trackSelector = new DefaultTrackSelector(/* context= */ getActivity(), new AdaptiveTrackSelection.Factory());
+        DefaultTrackSelector.ParametersBuilder builder = new DefaultTrackSelector.ParametersBuilder(/* context= */ getActivity());
+        builder.setExceedRendererCapabilitiesIfNecessary(true);
+        DefaultTrackSelector.Parameters params = builder.build();
+        trackSelector.setParameters(params);
+        return trackSelector;
+
+
+    }
+
+    private LoadControl buildLoadControl() {
+        DefaultLoadControl.Builder builder = new DefaultLoadControl.Builder();
+        builder.setBufferDurationsMs(10000,65000, 1000, 1000);
+        return builder.createDefaultLoadControl();
+
+    }
+
+    private RenderersFactory buildRendersFactory() {
+        return new DefaultRenderersFactory(/* context= */ getActivity())
+                .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
+    }
+
+
+    private void initializePlayer() {
+
+        mPlayer = new SimpleExoPlayer.Builder(/* context= */ getActivity(), buildRendersFactory())
+                        .setTrackSelector(buildTrackSelector())
+                        .setLoadControl(buildLoadControl())
+                        .build();
+
         mPlayerAdapter = new LeanbackPlayerAdapter(getActivity(), mPlayer, UPDATE_DELAY);
         mPlaylistActionListener = new PlaylistActionListener(mPlaylist);
         mPlayerAdapter.setErrorMessageProvider(new PlayerErrorMessageProvider());
@@ -227,60 +308,52 @@ public class PlaybackFragment extends VideoSupportFragment {
             Toast.makeText(getContext(), "No next or previous video. Returned to main menu", Toast.LENGTH_SHORT).show();
             getActivity().finish();
         }else {
-//        Log.d("title", video.title);
 
             mPlayerGlue.setTitle(video.title);
             mPlayerGlue.setSubtitle(video.description);
-
-            //Need to create the Drm here otherwise the auth token will not change when the next/previous buttons are used causing an invalid token exception
-            createDrm(video);
-            prepareMediaForPlaying(Uri.parse(video.videoUrl));
+            prepareMediaForPlaying(video);
             mPlayerGlue.play();
         }
     }
 
-    private void prepareMediaForPlaying(Uri mediaSourceUri) {
-        mPlayer.prepare(mediaSourceType(mediaSourceUri, drmSessionManager));
+    private void prepareMediaForPlaying(Video video) {
+        //mPlayer.prepare(mediaSourceType(Uri.parse(video.videoUrl), buildDrmSessionManager(video)));
+        mPlayer.prepare(buildMediaSource(video));
     }
 
-    //TODO CREATION OF THE DRM SESSION MANAGER (needs fixing)
-    public DrmSessionManager createDrm(Video video) {
-        String[] drmKeyRequestPropertiesList = new String[] {video.authtoken};
-//        String[] drmKeyRequestPropertiesList2 = new String[] {"test"}; **Used to test if the Multitrust Exception was working as intended**
-        MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(mVideo.license, drmKeyRequestPropertiesList);
 
+    private DrmSessionManager buildDrmSessionManager(Video video) {
+        String[] drmKeyRequestPropertiesList = new String[] {video.authtoken};
+        MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(mVideo.license, drmKeyRequestPropertiesList);
+        DefaultLoadErrorHandlingPolicy pol = new DefaultLoadErrorHandlingPolicy(0);
         drmSessionManager =
                 new DefaultDrmSessionManager.Builder()
                         .setUuidAndExoMediaDrmProvider(setUUID(), FrameworkMediaDrm.DEFAULT_PROVIDER)
                         .setMultiSession(false)
+                        .setLoadErrorHandlingPolicy(pol)
                         .build(multiTrustDrmCallback);
 
         return drmSessionManager;
     }
 
-
-//    TODO SWITCH STATEMENT FROM EXOPLAYER TO CHECK CONTENT TYPE, SET UP CORRECT MEDIA PLAYER FOR THAT TYPE
-    //currently I check the file extension to determine the media source.
-    public MediaSource mediaSourceType(
-            Uri uri, DrmSessionManager<ExoMediaCrypto> drmSessionManager) {
-        @C.ContentType int type = Util.inferContentType(mVideo.videoUrl); //checks the file extension to infer the type.
+    public MediaSource buildMediaSource(Video video) {
+        @C.ContentType int type = Util.inferContentType(video.videoUrl); //checks the file extension to infer the type.
         switch (type) {
             case C.TYPE_DASH:
-                return new DashMediaSource.Factory(dataSourceFactory)
-                        .setDrmSessionManager(drmSessionManager)
-                        .createMediaSource(uri);
+                return new DashMediaSource.Factory(buildDataSourceFactory())
+                        .setDrmSessionManager(buildDrmSessionManager(video))
+                        .createMediaSource(Uri.parse(video.videoUrl));
             case C.TYPE_SS:
-                return new SsMediaSource.Factory(dataSourceFactory)
-                        .setDrmSessionManager(drmSessionManager)
-                        .createMediaSource(uri);
+                return new SsMediaSource.Factory(buildDataSourceFactory())
+                        .setDrmSessionManager(buildDrmSessionManager(video))
+                        .createMediaSource(Uri.parse(video.videoUrl));
             case C.TYPE_HLS:
-                return new HlsMediaSource.Factory(dataSourceFactory)
-                        .setDrmSessionManager(drmSessionManager)
-                        .createMediaSource(uri);
+                return new HlsMediaSource.Factory(buildDataSourceFactory())
+                        .setDrmSessionManager(buildDrmSessionManager(video))
+                        .createMediaSource(Uri.parse(video.videoUrl));
             case C.TYPE_OTHER:
-                return new ProgressiveMediaSource.Factory(dataSourceFactory)
-                        .setDrmSessionManager(drmSessionManager)
-                        .createMediaSource(uri);
+                return new ProgressiveMediaSource.Factory(buildDataSourceFactory())
+                        .createMediaSource(Uri.parse(video.videoUrl));
             default:
                 throw new IllegalStateException("Unsupported type: " + type);
         }
@@ -485,16 +558,18 @@ public class PlaybackFragment extends VideoSupportFragment {
                     }
                 }
             }
-            //not giving me the output I expect. Getting a large error message including http tags etc.
-            Exception cause = e.getSourceException();
-            if (cause instanceof DrmSession.DrmSessionException) {
-                Throwable underlyingCause = cause.getCause();
-                if (underlyingCause instanceof MultiTrustDrmException)
-                {
-                    errorString = ((MultiTrustDrmException)underlyingCause).error;
+            //DRMSession exceptions are of TYPE_SOURCE
+            else if (e.type == ExoPlaybackException.TYPE_SOURCE) {
+                Exception cause = e.getSourceException();
+                if (cause instanceof DrmSession.DrmSessionException) {
+                    Throwable underlyingCause = cause.getCause();
+                    if (underlyingCause instanceof MultiTrustDrmException)
+                    {
+                        errorString = ((MultiTrustDrmException)underlyingCause).error;
+                    }
+
                 }
             }
-            Log.d("MultiTrustDrmException", "Player activity error" + errorString);
             return Pair.create(0, errorString);
         }
     }

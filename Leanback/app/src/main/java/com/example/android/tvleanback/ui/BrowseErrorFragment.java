@@ -35,16 +35,28 @@ import com.example.android.tvleanback.R;
  */
 public class BrowseErrorFragment extends ErrorSupportFragment {
     private static final boolean TRANSLUCENT = true;
-    private static final int TIMER_DELAY = 1000;
+    private static final int TIMER_DELAY = 3000;
 
     private final Handler mHandler = new Handler();
     private SpinnerFragment mSpinnerFragment;
 
+    public static BrowseErrorFragment newInstance(String error) {
+        BrowseErrorFragment myFragment = new BrowseErrorFragment();
+
+        Bundle args = new Bundle();
+        args.putString("error", error);
+        myFragment.setArguments(args);
+
+        return myFragment;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle(getResources().getString(R.string.app_name));
+        //Bundle args = getArguments();
+        //args.getString()
 
+        setTitle(getResources().getString(R.string.app_name));
         mSpinnerFragment = new SpinnerFragment();
         getFragmentManager().beginTransaction().add(R.id.main_frame, mSpinnerFragment).commit();
     }

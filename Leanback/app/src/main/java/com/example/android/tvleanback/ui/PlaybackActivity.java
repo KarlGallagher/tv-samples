@@ -22,6 +22,13 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import com.example.android.tvleanback.R;
+import com.google.android.exoplayer2.database.DatabaseProvider;
+import com.google.android.exoplayer2.database.ExoDatabaseProvider;
+import com.google.android.exoplayer2.upstream.cache.Cache;
+import com.google.android.exoplayer2.upstream.cache.NoOpCacheEvictor;
+import com.google.android.exoplayer2.upstream.cache.SimpleCache;
+
+import java.io.File;
 
 /**
  * Loads PlaybackFragment and delegates input from a game controller.
@@ -30,11 +37,13 @@ import com.example.android.tvleanback.R;
  * <a href="https://developer.android.com/training/game-controllers/controller-input.html">docs</href>.
  */
 public class PlaybackActivity extends LeanbackActivity {
+    private static final String DOWNLOAD_CONTENT_DIRECTORY = "downloads";
     private static final float GAMEPAD_TRIGGER_INTENSITY_ON = 0.5f;
     // Off-condition slightly smaller for button debouncing.
     private static final float GAMEPAD_TRIGGER_INTENSITY_OFF = 0.45f;
     private boolean gamepadTriggerPressed = false;
     private PlaybackFragment mPlaybackFragment;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
