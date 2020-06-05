@@ -37,6 +37,9 @@ public final class VideoCursorMapper extends CursorMapper {
     private static int licenseIndex;
     private static int authtokenIndex;
     private static int drmSchemeIndex;
+    private static int assetIndex;
+    private static int entitlementIndex;
+    private static int policyIndex;
 
     @Override
     protected void bindColumns(Cursor cursor) {
@@ -51,6 +54,9 @@ public final class VideoCursorMapper extends CursorMapper {
         licenseIndex = cursor.getColumnIndex(VideoContract.VideoEntry.COLUMN_LICENSE);
         authtokenIndex = cursor.getColumnIndex(VideoContract.VideoEntry.COLUMN_AUTH_TOKEN);
         drmSchemeIndex = cursor.getColumnIndex(VideoContract.VideoEntry.COLUMN_DRM_SCHEME);
+        assetIndex = cursor.getColumnIndex(VideoContract.VideoEntry.COLUMN_MULTITRUST_ASSET);
+        entitlementIndex = cursor.getColumnIndex(VideoContract.VideoEntry.COLUMN_MULTITRUST_ENTITLEMENT);
+        policyIndex = cursor.getColumnIndex(VideoContract.VideoEntry.COLUMN_MULTITRUST_POLICY);
     }
 
     @Override
@@ -68,6 +74,9 @@ public final class VideoCursorMapper extends CursorMapper {
         String license = cursor.getString(licenseIndex);
         String authtoken = cursor.getString(authtokenIndex);
         String drmScheme = cursor.getString(drmSchemeIndex);
+        String asset = cursor.getString(assetIndex);
+        String entitlement = cursor.getString(entitlementIndex);
+        String policy = cursor.getString(policyIndex);
 
         // Build a Video object to be processed.
         return new Video.VideoBuilder()
@@ -82,6 +91,9 @@ public final class VideoCursorMapper extends CursorMapper {
                 .license(license)
                 .authtoken(authtoken)
                 .drmScheme(drmScheme)
+                .asset(asset)
+                .entitlement(entitlement)
+                .policy(policy)
                 .build();
     }
 }

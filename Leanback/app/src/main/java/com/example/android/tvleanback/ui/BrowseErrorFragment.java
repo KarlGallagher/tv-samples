@@ -35,12 +35,12 @@ import com.example.android.tvleanback.R;
  */
 public class BrowseErrorFragment extends ErrorSupportFragment {
     private static final boolean TRANSLUCENT = true;
-    private static final int TIMER_DELAY = 3000;
+    private static final int TIMER_DELAY = 1000;
 
     private final Handler mHandler = new Handler();
     private SpinnerFragment mSpinnerFragment;
 
-    public static BrowseErrorFragment newInstance(String error) {
+    static BrowseErrorFragment newInstance(String error) {
         BrowseErrorFragment myFragment = new BrowseErrorFragment();
 
         Bundle args = new Bundle();
@@ -53,12 +53,10 @@ public class BrowseErrorFragment extends ErrorSupportFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //Bundle args = getArguments();
-        //args.getString()
 
         setTitle(getResources().getString(R.string.app_name));
         mSpinnerFragment = new SpinnerFragment();
-        getFragmentManager().beginTransaction().add(R.id.main_frame, mSpinnerFragment).commit();
+        getFragmentManager().beginTransaction().add(R.id.playback_fragment_background, mSpinnerFragment).commit();
     }
 
     @Override
@@ -82,7 +80,8 @@ public class BrowseErrorFragment extends ErrorSupportFragment {
 
     private void setErrorContent() {
         setImageDrawable(getResources().getDrawable(R.drawable.lb_ic_sad_cloud, null));
-        setMessage(getResources().getString(R.string.error_fragment_message));
+
+        setMessage(getArguments().getString("error", getResources().getString(R.string.error_fragment_message)));
         setDefaultBackground(TRANSLUCENT);
 
         setButtonText(getResources().getString(R.string.dismiss_error));

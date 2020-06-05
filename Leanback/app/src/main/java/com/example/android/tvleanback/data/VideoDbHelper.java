@@ -28,7 +28,7 @@ import com.example.android.tvleanback.data.VideoContract.VideoEntry;
 public class VideoDbHelper extends SQLiteOpenHelper {
 
     // Change this when you change the database schema.
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     // The name of our database.
     private static final String DATABASE_NAME = "leanback.db";
@@ -52,6 +52,9 @@ public class VideoDbHelper extends SQLiteOpenHelper {
                 VideoEntry.COLUMN_LICENSE + " TEXT, " +
                 VideoEntry.COLUMN_AUTH_TOKEN + " TEXT, " +
                 VideoEntry.COLUMN_DRM_SCHEME + " TEXT, " +
+                VideoEntry.COLUMN_MULTITRUST_ASSET + " TEXT, " +
+                VideoEntry.COLUMN_MULTITRUST_ENTITLEMENT + " TEXT, " +
+                VideoEntry.COLUMN_MULTITRUST_POLICY + " TEXT, " +
                 VideoEntry.COLUMN_CONTENT_TYPE + " TEXT NOT NULL, " +
                 VideoEntry.COLUMN_IS_LIVE + " INTEGER DEFAULT 0, " +
                 VideoEntry.COLUMN_VIDEO_WIDTH + " INTEGER NOT NULL, " +

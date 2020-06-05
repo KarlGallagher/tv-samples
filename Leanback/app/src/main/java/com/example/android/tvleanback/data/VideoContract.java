@@ -70,6 +70,9 @@ public final class VideoContract {
 
         //The Authorisation Token
         public static final String COLUMN_AUTH_TOKEN = "authtoken";
+        public static final String COLUMN_MULTITRUST_ASSET = "asset";
+        public static final String COLUMN_MULTITRUST_ENTITLEMENT = "entitlement";
+        public static final String COLUMN_MULTITRUST_POLICY = "policy";
 
         public static final String COLUMN_DRM_SCHEME = "drmscheme";
 

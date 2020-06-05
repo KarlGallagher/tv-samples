@@ -70,7 +70,7 @@ import java.util.Map;
 public class MainFragment extends BrowseSupportFragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    private static final int BACKGROUND_UPDATE_DELAY = 300;
+    private static final int BACKGROUND_UPDATE_DELAY = 200;
     private final Handler mHandler = new Handler();
     private ArrayObjectAdapter mCategoryRowAdapter;
     private Drawable mDefaultBackground;
@@ -140,8 +140,9 @@ public class MainFragment extends BrowseSupportFragment
     }
 
     private void setupUIElements() {
-        setBadgeDrawable(
-                getActivity().getResources().getDrawable(R.drawable.videos_by_google_banner, null));
+        Drawable badge = getActivity().getResources().getDrawable(R.drawable.videos_by_google_banner, null);
+        badge.setAlpha(190);
+        setBadgeDrawable(badge);
         setTitle(getString(R.string.browse_title)); // Badge, when set, takes precedent over title
         setHeadersState(HEADERS_ENABLED);
         setHeadersTransitionOnBackEnabled(true);

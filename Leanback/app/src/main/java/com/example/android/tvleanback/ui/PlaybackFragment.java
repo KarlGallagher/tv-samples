@@ -18,23 +18,21 @@ package com.example.android.tvleanback.ui;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.app.Application;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.media.MediaDrm;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
+import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.leanback.app.VideoFragment;
-import androidx.leanback.app.VideoFragmentGlueHost;
 import androidx.leanback.app.VideoSupportFragment;
 import androidx.leanback.app.VideoSupportFragmentGlueHost;
-import androidx.leanback.media.PlaybackGlue;
 import androidx.leanback.widget.ArrayObjectAdapter;
 import androidx.leanback.widget.ClassPresenterSelector;
 import androidx.leanback.widget.CursorObjectAdapter;
@@ -52,9 +50,7 @@ import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 
 import com.example.android.tvleanback.R;
-import com.example.android.tvleanback.Utils;
 import com.example.android.tvleanback.data.VideoContract;
-import com.example.android.tvleanback.data.VideoDbBuilder;
 import com.example.android.tvleanback.model.Playlist;
 import com.example.android.tvleanback.model.Video;
 import com.example.android.tvleanback.model.VideoCursorMapper;
@@ -64,39 +60,25 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.database.DatabaseProvider;
-import com.google.android.exoplayer2.database.ExoDatabaseProvider;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
 import com.google.android.exoplayer2.drm.DrmSession;
 import com.google.android.exoplayer2.drm.DrmSessionManager;
-import com.google.android.exoplayer2.drm.ExoMediaCrypto;
-import com.google.android.exoplayer2.drm.ExoMediaDrm;
 import com.google.android.exoplayer2.drm.FrameworkMediaDrm;
 import com.google.android.exoplayer2.ext.leanback.LeanbackPlayerAdapter;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
-import com.google.android.exoplayer2.offline.DownloadHelper;
-import com.google.android.exoplayer2.offline.DownloadRequest;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
-import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.ui.PlayerView;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy;
@@ -105,16 +87,20 @@ import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.upstream.cache.Cache;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
-import com.google.android.exoplayer2.upstream.cache.NoOpCacheEvictor;
-import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.google.android.exoplayer2.util.ErrorMessageProvider;
 import com.google.android.exoplayer2.util.Util;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
 import java.util.UUID;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import static com.example.android.tvleanback.ui.PlaybackFragment.VideoLoaderCallbacks.RELATED_VIDEOS_LOADER;
 
@@ -124,14 +110,12 @@ import static com.example.android.tvleanback.ui.PlaybackFragment.VideoLoaderCall
  */
 public class PlaybackFragment extends VideoSupportFragment {
 
-    private static final int UPDATE_DELAY = 16;
+    private static final int UPDATE_DELAY = 10;
 
     private VideoPlayerGlue mPlayerGlue;
     private LeanbackPlayerAdapter mPlayerAdapter;
     private SimpleExoPlayer mPlayer;
-    private TrackSelector mTrackSelector;
     private PlaylistActionListener mPlaylistActionListener;
-    private DrmSessionManager drmSessionManager;
 
 
     private Video mVideo;
@@ -139,7 +123,7 @@ public class PlaybackFragment extends VideoSupportFragment {
     private VideoLoaderCallbacks mVideoLoaderCallbacks;
     private CursorObjectAdapter mVideoCursorAdapter;
 
-    String userAgent;
+    private String userAgent;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -205,7 +189,8 @@ public class PlaybackFragment extends VideoSupportFragment {
     protected void onError(int errorCode, CharSequence errorMessage) {
         Log.d("Error", "Playback error" + errorMessage.toString() );
 
-        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+
+        /*AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
         alert.setTitle("Playback Error");
 
         alert.setNegativeButton("Exit", new DialogInterface.OnClickListener() {
@@ -214,7 +199,11 @@ public class PlaybackFragment extends VideoSupportFragment {
                 }
             });
         alert.setMessage(errorMessage);
-        alert.show();
+        alert.show();*/
+
+        BrowseErrorFragment errorFragment = BrowseErrorFragment.newInstance(errorMessage.toString().replaceAll("\\s",""));
+        getFragmentManager().beginTransaction().replace(R.id.playback_fragment_background, errorFragment).addToBackStack(null).commit();
+
 
 }
 
@@ -290,7 +279,6 @@ public class PlaybackFragment extends VideoSupportFragment {
         if (mPlayer != null) {
             mPlayer.release();
             mPlayer = null;
-            mTrackSelector = null;
             mPlayerGlue = null;
             mPlayerAdapter = null;
             mPlaylistActionListener = null;
@@ -298,10 +286,6 @@ public class PlaybackFragment extends VideoSupportFragment {
     }
 
     private void play(Video video) {
-        //potentially put in some form of conditional statement here so as to
-        //stop the application from crashing on next/previous although maybe putting the
-        //conditional in the onNext() or onPrevious() is a better idea. NEED TO FIX THIS
-
         if(video==null) {
             Intent intent = new Intent(getActivity(), MainActivity.class);
             getActivity().startActivity(intent);
@@ -311,45 +295,49 @@ public class PlaybackFragment extends VideoSupportFragment {
 
             mPlayerGlue.setTitle(video.title);
             mPlayerGlue.setSubtitle(video.description);
-            prepareMediaForPlaying(video);
-            mPlayerGlue.play();
+
+            //calls prepareMediaForPlaying when completed
+            Log.d("PlaybackFragment", "Requesting Token");
+            new GetTokenTask("https://urm.latens.com:7555", "will", "will", video).execute();
+
+
         }
     }
 
-    private void prepareMediaForPlaying(Video video) {
-        //mPlayer.prepare(mediaSourceType(Uri.parse(video.videoUrl), buildDrmSessionManager(video)));
-        mPlayer.prepare(buildMediaSource(video));
+    //Called on completion of GetTokenTask
+    private void prepareMediaForPlaying(Video video, String token) {
+        mPlayer.prepare(buildMediaSource(video, token));
+        mPlayerGlue.play();
     }
 
 
-    private DrmSessionManager buildDrmSessionManager(Video video) {
-        String[] drmKeyRequestPropertiesList = new String[] {video.authtoken};
+    private DrmSessionManager buildDrmSessionManager(Video video, String authtoken) {
+        String[] drmKeyRequestPropertiesList = new String[] {authtoken};
         MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(mVideo.license, drmKeyRequestPropertiesList);
         DefaultLoadErrorHandlingPolicy pol = new DefaultLoadErrorHandlingPolicy(0);
-        drmSessionManager =
-                new DefaultDrmSessionManager.Builder()
-                        .setUuidAndExoMediaDrmProvider(setUUID(), FrameworkMediaDrm.DEFAULT_PROVIDER)
-                        .setMultiSession(false)
-                        .setLoadErrorHandlingPolicy(pol)
-                        .build(multiTrustDrmCallback);
+        DrmSessionManager drmSessionManager = new DefaultDrmSessionManager.Builder()
+                .setUuidAndExoMediaDrmProvider(setUUID(), FrameworkMediaDrm.DEFAULT_PROVIDER)
+                .setMultiSession(false)
+                .setLoadErrorHandlingPolicy(pol)
+                .build(multiTrustDrmCallback);
 
         return drmSessionManager;
     }
 
-    public MediaSource buildMediaSource(Video video) {
+    public MediaSource buildMediaSource(Video video, String token) {
         @C.ContentType int type = Util.inferContentType(video.videoUrl); //checks the file extension to infer the type.
         switch (type) {
             case C.TYPE_DASH:
                 return new DashMediaSource.Factory(buildDataSourceFactory())
-                        .setDrmSessionManager(buildDrmSessionManager(video))
+                        .setDrmSessionManager(buildDrmSessionManager(video, token))
                         .createMediaSource(Uri.parse(video.videoUrl));
             case C.TYPE_SS:
                 return new SsMediaSource.Factory(buildDataSourceFactory())
-                        .setDrmSessionManager(buildDrmSessionManager(video))
+                        .setDrmSessionManager(buildDrmSessionManager(video, token))
                         .createMediaSource(Uri.parse(video.videoUrl));
             case C.TYPE_HLS:
                 return new HlsMediaSource.Factory(buildDataSourceFactory())
-                        .setDrmSessionManager(buildDrmSessionManager(video))
+                        .setDrmSessionManager(buildDrmSessionManager(video, token))
                         .createMediaSource(Uri.parse(video.videoUrl));
             case C.TYPE_OTHER:
                 return new ProgressiveMediaSource.Factory(buildDataSourceFactory())
@@ -571,6 +559,85 @@ public class PlaybackFragment extends VideoSupportFragment {
                 }
             }
             return Pair.create(0, errorString);
+        }
+    }
+
+    private class GetTokenTask extends AsyncTask<Void,Void,String> {
+
+        private final String Url;
+        private final String Username;
+        private final String Password;
+        private final String Path;
+        private final String Asset;
+        private final String Entitlement;
+        private final String Policy;
+        private final Video  Video;
+
+
+        GetTokenTask(String url, String user, String pass, Video video) {
+            this.Url = url;
+            this.Username = user;
+            this.Password = pass;
+            this.Asset =  video.asset;
+            this.Path = "gettoken";
+            this.Entitlement = video.entitlement;
+            this.Policy = video.policy;
+            this.Video = video;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            Log.d("Token Request","Getting Token for :" + this.Asset);
+        }
+        @Override
+        protected String doInBackground(Void... voids) {
+            String ent  = this.Entitlement.isEmpty() ? "" : "&entitlement="+this.Entitlement;
+            String pol  = this.Policy.isEmpty() ? "" : "&policy="+this.Policy;
+            String request = this.Url + "/" + this.Path + "?username=" + this.Username + "&password=" + this.Password + "&asset=" + this.Asset + "&duration=3600" + ent + pol;
+
+            try {
+                java.net.URL url = new java.net.URL(request);
+                HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+                conn.setReadTimeout(3000);
+
+                BufferedReader bufferedReader = new BufferedReader(
+                        new InputStreamReader(conn.getInputStream())
+                );
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+
+                while ((inputLine = bufferedReader.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                bufferedReader.close();
+
+                return response.toString();
+
+            } catch (IOException e ){
+                e.printStackTrace();
+                if (e.getMessage().isEmpty())
+                {
+                    return "TOKEN REQUEST FAILED: " + e.getCause().toString();
+                }
+                else
+                {
+                    return "TOKEN REQUEST FAILED: " + e.getMessage();
+                }
+            }
+
+        }
+        @Override
+        protected void onPostExecute(String result) {
+            if(result.contains("FAILED"))
+            {
+                onError(500, result);
+
+            }
+            else{
+                //result is Auth Token
+                prepareMediaForPlaying(this.Video, result);
+            }
+
         }
     }
 }

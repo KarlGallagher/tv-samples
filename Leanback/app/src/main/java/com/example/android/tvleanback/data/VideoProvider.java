@@ -72,6 +72,9 @@ public class VideoProvider extends ContentProvider {
                 VideoContract.VideoEntry.COLUMN_CARD_IMG,
                 VideoContract.VideoEntry.COLUMN_LICENSE,
                 VideoContract.VideoEntry.COLUMN_AUTH_TOKEN,
+                VideoContract.VideoEntry.COLUMN_MULTITRUST_ASSET,
+                VideoContract.VideoEntry.COLUMN_MULTITRUST_ENTITLEMENT,
+                VideoContract.VideoEntry.COLUMN_MULTITRUST_POLICY,
                 VideoContract.VideoEntry.COLUMN_DRM_SCHEME,
                 VideoContract.VideoEntry.COLUMN_CONTENT_TYPE,
                 VideoContract.VideoEntry.COLUMN_IS_LIVE,
@@ -131,6 +134,9 @@ public class VideoProvider extends ContentProvider {
         map.put(VideoContract.VideoEntry.COLUMN_STUDIO, VideoContract.VideoEntry.COLUMN_STUDIO);
         map.put(VideoContract.VideoEntry.COLUMN_LICENSE, VideoContract.VideoEntry.COLUMN_LICENSE);
         map.put(VideoContract.VideoEntry.COLUMN_AUTH_TOKEN, VideoContract.VideoEntry.COLUMN_AUTH_TOKEN);
+        map.put(VideoContract.VideoEntry.COLUMN_MULTITRUST_ASSET, VideoContract.VideoEntry.COLUMN_MULTITRUST_ASSET);
+        map.put(VideoContract.VideoEntry.COLUMN_MULTITRUST_ENTITLEMENT, VideoContract.VideoEntry.COLUMN_MULTITRUST_ENTITLEMENT);
+        map.put(VideoContract.VideoEntry.COLUMN_MULTITRUST_POLICY, VideoContract.VideoEntry.COLUMN_MULTITRUST_POLICY);
         map.put(VideoContract.VideoEntry.COLUMN_DRM_SCHEME, VideoContract.VideoEntry.COLUMN_DRM_SCHEME);
         map.put(VideoContract.VideoEntry.COLUMN_CONTENT_TYPE,
                 VideoContract.VideoEntry.COLUMN_CONTENT_TYPE);

@@ -18,11 +18,11 @@
     android:layout_height="match_parent"
     android:orientation="horizontal">
 
-    <ImageView
+    <!--<ImageView
         android:id="@+id/header_icon"
         android:layout_width="65dp"
         android:layout_height="52dp"
-        android:contentDescription="@string/header_icon" />
+        android:contentDescription="@string/header_icon" />-->
 
     <TextView
         android:id="@+id/header_label"

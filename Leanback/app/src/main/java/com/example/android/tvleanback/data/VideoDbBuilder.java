@@ -62,6 +62,9 @@ public class VideoDbBuilder {
     public static final String TAG_TITLE = "name";
     public static final String TAG_LICENSE = "wv_license_proxy";
     public static final String TAG_AUTH_TOKEN = "token";
+    public static final String TAG_ASSET = "asset";
+    public static final String TAG_ENTITLEMENT = "entitlement";
+    public static final String TAG_POLICY = "policy";
     public static final String TAG_DRM_SCHEME = "drm_type";
     public static final String TAG_FORMAT = "stream_format";
 
@@ -116,7 +119,7 @@ public class VideoDbBuilder {
 
             //JSONObject category = categoryArray.getJSONObject(i);
            // String categoryName = category.getString(TAG_CATEGORY);
-            String categoryName = "MultiTrust VOD";
+            String categoryName = "Trailers";
             //videoArray = category.getJSONArray(TAG_MEDIA);
             JSONArray videoArray = jsonObj.getJSONArray(TAG_MEDIA);
 
@@ -140,6 +143,9 @@ public class VideoDbBuilder {
                 String studio = video.optString(TAG_STUDIO);
                 String license = video.optString(TAG_LICENSE);
                 String authtoken = video.optString(TAG_AUTH_TOKEN);
+                String asset = video.optString(TAG_ASSET, "asset");
+                String entitlement = video.optString(TAG_ENTITLEMENT, "");
+                String policy = video.optString(TAG_POLICY, "");
                 String drmScheme = "widevine";
 
 
@@ -153,6 +159,9 @@ public class VideoDbBuilder {
                 videoValues.put(VideoContract.VideoEntry.COLUMN_STUDIO, studio);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_LICENSE, license);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_AUTH_TOKEN, authtoken);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_MULTITRUST_ASSET, asset);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_MULTITRUST_ENTITLEMENT, entitlement);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_MULTITRUST_POLICY, asset);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_DRM_SCHEME, drmScheme);
 
                 // Fixed defaults.
@@ -238,7 +247,6 @@ public class VideoDbBuilder {
                 sb.append(line);
             }
             String json = sb.toString();
-//            Log.d("TESTING", json);
             return new JSONObject(json);
         } finally {
             urlConnection.disconnect();

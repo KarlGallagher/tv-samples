@@ -35,6 +35,9 @@ public final class Video implements Parcelable {
     public final String license;
     public final String authtoken;
     public final String drmScheme;
+    public final String asset;
+    public final String entitlement;
+    public final String policy;
 
     private Video(
             final long id,
@@ -47,7 +50,10 @@ public final class Video implements Parcelable {
             final String studio,
             final String license,
             final String authtoken,
-            final String drmScheme) {
+            final String drmScheme,
+            final String asset,
+            final String entitlement,
+            final String policy) {
         this.id = id;
         this.category = category;
         this.title = title;
@@ -59,6 +65,9 @@ public final class Video implements Parcelable {
         this.license = license;
         this.authtoken = authtoken;
         this.drmScheme = drmScheme;
+        this.asset = asset;
+        this.entitlement = entitlement;
+        this.policy = policy;
     }
 
     protected Video(Parcel in) {
@@ -73,6 +82,9 @@ public final class Video implements Parcelable {
         license = in.readString();
         authtoken = in.readString();
         drmScheme = in.readString();
+        asset = in.readString();
+        entitlement = in.readString();
+        policy = in.readString();
     }
 
     public static final Creator<Video> CREATOR = new Creator<Video>() {
@@ -109,6 +121,9 @@ public final class Video implements Parcelable {
         dest.writeString(license);
         dest.writeString(authtoken);
         dest.writeString(drmScheme);
+        dest.writeString(asset);
+        dest.writeString(entitlement);
+        dest.writeString(policy);
     }
 
     @Override
@@ -124,6 +139,9 @@ public final class Video implements Parcelable {
         s += ", license='" + license +  "'";
         s += ", authtoken='" + authtoken +  "'";
         s += ", drmscheme='" + drmScheme + "'";
+        s += ", asset='" + asset + "'";
+        s += ", entitlement='" + entitlement + "'";
+        s += ", policy='" + policy + "'";
         s += "}";
         return s;
     }
@@ -141,6 +159,9 @@ public final class Video implements Parcelable {
         private String license;
         private String authtoken;
         private String drmScheme;
+        private String asset;
+        private String entitlement;
+        private String policy;
 
         public VideoBuilder id(long id) {
             this.id = id;
@@ -197,6 +218,21 @@ public final class Video implements Parcelable {
             return this;
         }
 
+        public VideoBuilder asset(String asset){
+            this.asset = asset;
+            return this;
+        }
+
+        public VideoBuilder entitlement(String entitlement){
+            this.entitlement = entitlement;
+            return this;
+        }
+
+        public VideoBuilder policy(String policy){
+            this.policy = policy;
+            return this;
+        }
+
         public Video buildFromMediaDesc(MediaDescription desc) {
             return new Video(
                     Long.parseLong(desc.getMediaId()),
@@ -207,6 +243,9 @@ public final class Video implements Parcelable {
                     "", // Background Image URI - not provided by MediaDescription.
                     String.valueOf(desc.getIconUri()),
                     String.valueOf(desc.getSubtitle()),
+                    "",
+                    "",
+                    "",
                     "",
                     "",
                     "");
@@ -224,7 +263,10 @@ public final class Video implements Parcelable {
                     studio,
                     license,
                     authtoken,
-                    drmScheme);
+                    drmScheme,
+                    asset,
+                    entitlement,
+                    policy);
         }
     }
 }
