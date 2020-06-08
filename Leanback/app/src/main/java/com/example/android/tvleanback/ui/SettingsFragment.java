@@ -16,6 +16,8 @@ package com.example.android.tvleanback.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+
+import androidx.preference.EditTextPreference;
 import androidx.preference.PreferenceFragment;
 import androidx.leanback.preference.LeanbackPreferenceFragment;
 import androidx.leanback.preference.LeanbackSettingsFragment;
@@ -78,6 +80,8 @@ public class SettingsFragment extends LeanbackSettingsFragment
                 setPreferencesFromResource(prefResId, root);
             }
         }
+
+
 
         @Override
         public boolean onPreferenceTreeClick(Preference preference) {

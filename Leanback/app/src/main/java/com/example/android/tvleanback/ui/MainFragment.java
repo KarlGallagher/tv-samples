@@ -18,6 +18,7 @@ package com.example.android.tvleanback.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -43,7 +44,10 @@ import androidx.loader.app.LoaderManager;
 import androidx.core.content.ContextCompat;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
+
+import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -84,6 +88,10 @@ public class MainFragment extends BrowseSupportFragment
     // Maps a Loader Id to its CursorObjectAdapter.
     private Map<Integer, CursorObjectAdapter> mVideoCursorAdapters;
 
+    //Store the last loaded content list
+    private SharedPreferences mPreferences;
+    private String mLastContentList;
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -101,6 +109,13 @@ public class MainFragment extends BrowseSupportFragment
     public void onActivityCreated(Bundle savedInstanceState) {
         // Final initialization, modifying UI elements.
         super.onActivityCreated(savedInstanceState);
+
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mLastContentList = mPreferences.getString(getString(R.string.pref_title_content), getString(R.string.catalog_url));
+
+        if (mLastContentList.isEmpty()) {
+            mLastContentList = getString(R.string.catalog_url);
+        }
 
         // Prepare the manager that maintains the same background image between activities.
         prepareBackgroundManager();
@@ -128,6 +143,27 @@ public class MainFragment extends BrowseSupportFragment
     public void onStop() {
         mBackgroundManager.release();
         super.onStop();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        String content = mPreferences.getString(getString(R.string.pref_title_content), getString(R.string.catalog_url));
+        if (content != mLastContentList){
+            mLastContentList = content;
+            // Start an Intent to fetch the videos.
+            Intent serviceIntent = new Intent(getActivity(), FetchVideoService.class);
+
+            //this is an update
+            serviceIntent.putExtra("update", true);
+
+            if (!content.isEmpty()) {
+                serviceIntent.putExtra("content_url", mLastContentList);
+
+            }
+            getActivity().startService(serviceIntent);
+        }
+
     }
 
     private void prepareBackgroundManager() {
@@ -203,8 +239,8 @@ public class MainFragment extends BrowseSupportFragment
     }
 
     private void updateRecommendations() {
-        Intent recommendationIntent = new Intent(getActivity(), UpdateRecommendationsService.class);
-        getActivity().startService(recommendationIntent);
+        //Intent recommendationIntent = new Intent(getActivity(), UpdateRecommendationsService.class);
+        //getActivity().startService(recommendationIntent);
     }
 
     @Override
@@ -280,16 +316,16 @@ public class MainFragment extends BrowseSupportFragment
                     data.moveToNext();
                 }
 
-                // Create a row for this special case with more samples.
-//                HeaderItem gridHeader = new HeaderItem(getString(R.string.more_samples));
-//                GridItemPresenter gridPresenter = new GridItemPresenter(this);
-//                ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(gridPresenter);
-//                gridRowAdapter.add(getString(R.string.grid_view));
-//                gridRowAdapter.add(getString(R.string.guidedstep_first_title));
-//                gridRowAdapter.add(getString(R.string.error_fragment));
-//                gridRowAdapter.add(getString(R.string.personal_settings));
-//                ListRow row = new ListRow(gridHeader, gridRowAdapter);
-//                mCategoryRowAdapter.add(row);
+                //Create a row for this special case with more samples.
+                HeaderItem gridHeader = new HeaderItem(getString(R.string.more_samples));
+                GridItemPresenter gridPresenter = new GridItemPresenter(this);
+                ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(gridPresenter);
+                //gridRowAdapter.add(getString(R.string.grid_view));
+                //gridRowAdapter.add(getString(R.string.guidedstep_first_title));
+                //gridRowAdapter.add(getString(R.string.error_fragment));
+                gridRowAdapter.add(getString(R.string.personal_settings));
+                ListRow row = new ListRow(gridHeader, gridRowAdapter);
+                mCategoryRowAdapter.add(row);
 
                 startEntranceTransition(); // TODO: Move startEntranceTransition to after all
                 // cursors have loaded.
@@ -300,6 +336,9 @@ public class MainFragment extends BrowseSupportFragment
         } else {
             // Start an Intent to fetch the videos.
             Intent serviceIntent = new Intent(getActivity(), FetchVideoService.class);
+            //this is NOT an update
+            serviceIntent.putExtra("update", false);
+            serviceIntent.putExtra("content_url", mLastContentList);
             getActivity().startService(serviceIntent);
         }
     }
@@ -339,36 +378,42 @@ public class MainFragment extends BrowseSupportFragment
                         ((ImageCardView) itemViewHolder.view).getMainImageView(),
                         VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
                 getActivity().startActivity(intent, bundle);
-//            } else if (item instanceof String) {
-//                if (((String) item).contains(getString(R.string.grid_view))) {
-//                    Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
-//                    Bundle bundle =
-//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-//                                    .toBundle();
-//                    startActivity(intent, bundle);
-//                } else if (((String) item).contains(getString(R.string.guidedstep_first_title))) {
-//                    Intent intent = new Intent(getActivity(), GuidedStepActivity.class);
-//                    Bundle bundle =
-//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-//                                    .toBundle();
-//                    startActivity(intent, bundle);
-//                } else if (((String) item).contains(getString(R.string.error_fragment))) {
-//                    BrowseErrorFragment errorFragment = new BrowseErrorFragment();
-//                    getFragmentManager().beginTransaction().replace(R.id.main_frame, errorFragment)
-//                            .addToBackStack(null).commit();
-//                } else if(((String) item).contains(getString(R.string.personal_settings))) {
-//                    Intent intent = new Intent(getActivity(), SettingsActivity.class);
-//                    Bundle bundle =
-//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-//                                    .toBundle();
-//                    startActivity(intent, bundle);
+            } else if (item instanceof String) {
+
+                if(((String) item).contains(getString(R.string.personal_settings))) {
+                    Intent intent = new Intent(getActivity(), SettingsActivity.class);
+                    Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity()).toBundle();
+                    startActivity(intent, bundle);
+                }
+                /*if (((String) item).contains(getString(R.string.grid_view))) {
+                   Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
+                    Bundle bundle =
+                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+                                    .toBundle();
+                    startActivity(intent, bundle);
+                } else if (((String) item).contains(getString(R.string.guidedstep_first_title))) {
+                    Intent intent = new Intent(getActivity(), GuidedStepActivity.class);
+                    Bundle bundle =
+                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+                                    .toBundle();
+                    startActivity(intent, bundle);
+                } else if (((String) item).contains(getString(R.string.error_fragment))) {
+                    BrowseErrorFragment errorFragment = new BrowseErrorFragment();
+                    getFragmentManager().beginTransaction().replace(R.id.main_frame, errorFragment)
+                            .addToBackStack(null).commit();
+                } else if(((String) item).contains(getString(R.string.personal_settings))) {
+                    Intent intent = new Intent(getActivity(), SettingsActivity.class);
+                    Bundle bundle =
+                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+                                    .toBundle();
+                    startActivity(intent, bundle);
                 } else {
                     Toast.makeText(getActivity(), ((String) item), Toast.LENGTH_SHORT)
                             .show();
-                }
+                }*/
             }
         }
-//    }
+    }
 
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
         @Override

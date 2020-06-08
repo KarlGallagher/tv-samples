@@ -250,9 +250,9 @@ public class VideoProvider extends ContentProvider {
     public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
         final int rowsDeleted;
 
-        if (selection == null) {
-            throw new UnsupportedOperationException("Cannot delete without selection specified.");
-        }
+        //if (selection == null) {
+        //    throw new UnsupportedOperationException("Cannot delete without selection specified.");
+        //}
 
         switch (sUriMatcher.match(uri)) {
             case VIDEO: {

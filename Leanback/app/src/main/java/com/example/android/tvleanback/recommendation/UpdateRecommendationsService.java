@@ -67,11 +67,11 @@ public class UpdateRecommendationsService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         // Generate recommendations, but only if recommendations are enabled
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        if (!sharedPreferences.getBoolean(getString(R.string.pref_key_recommendations), true)) {
-            Log.d(TAG, "Recommendations disabled");
-            mNotifManager.cancelAll();
-            return;
-        }
+        //if (!sharedPreferences.getBoolean(getString(R.string.pref_key_recommendations), true)) {
+        //    Log.d(TAG, "Recommendations disabled");
+        //    mNotifManager.cancelAll();
+        //    return;
+        //}
         Resources res = getResources();
         int cardWidth = res.getDimensionPixelSize(R.dimen.card_width);
         int cardHeight = res.getDimensionPixelSize(R.dimen.card_height);

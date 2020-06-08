@@ -21,11 +21,13 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.Pair;
 import android.widget.EditText;
@@ -98,6 +100,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.UUID;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -122,6 +125,7 @@ public class PlaybackFragment extends VideoSupportFragment {
     private Playlist mPlaylist;
     private VideoLoaderCallbacks mVideoLoaderCallbacks;
     private CursorObjectAdapter mVideoCursorAdapter;
+    private SharedPreferences mPreferences;
 
     private String userAgent;
 
@@ -132,6 +136,7 @@ public class PlaybackFragment extends VideoSupportFragment {
         userAgent = Util.getUserAgent(getActivity(), "MultiTrustAndroidDemo");
 
         mVideo = getActivity().getIntent().getParcelableExtra(VideoDetailsActivity.VIDEO);
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         mPlaylist = new Playlist();
 
 
@@ -298,7 +303,22 @@ public class PlaybackFragment extends VideoSupportFragment {
 
             //calls prepareMediaForPlaying when completed
             Log.d("PlaybackFragment", "Requesting Token");
-            new GetTokenTask("https://urm.latens.com:7555", "will", "will", video).execute();
+            String user = mPreferences.getString(getString(R.string.pref_title_username), "will");
+            String pass = mPreferences.getString(getString(R.string.pref_title_password), "will");
+            String url = mPreferences.getString(getString(R.string.pref_title_portal), "https://urm.latens.com:7555");
+
+            //If setting was added and reverted the pref may be an empty string and default needs defined manually
+            if (user.isEmpty()){
+                user = "will";
+            }
+            if (pass.isEmpty()){
+                pass = "will";
+            }
+            if (url.isEmpty()){
+                url = "https://urm.latens.com:7555";
+            }
+
+            new GetTokenTask(url, user, pass, video).execute();
 
 
         }
@@ -313,6 +333,10 @@ public class PlaybackFragment extends VideoSupportFragment {
 
     private DrmSessionManager buildDrmSessionManager(Video video, String authtoken) {
         String[] drmKeyRequestPropertiesList = new String[] {authtoken};
+        String proxy = mPreferences.getString(getString(R.string.pref_title_proxy), mVideo.license);
+        if (proxy.isEmpty()){
+            proxy = mVideo.license;
+        }
         MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(mVideo.license, drmKeyRequestPropertiesList);
         DefaultLoadErrorHandlingPolicy pol = new DefaultLoadErrorHandlingPolicy(0);
         DrmSessionManager drmSessionManager = new DefaultDrmSessionManager.Builder()
@@ -597,7 +621,8 @@ public class PlaybackFragment extends VideoSupportFragment {
 
             try {
                 java.net.URL url = new java.net.URL(request);
-                HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+                URLConnection conn;
+                conn = url.openConnection();
                 conn.setReadTimeout(3000);
 
                 BufferedReader bufferedReader = new BufferedReader(

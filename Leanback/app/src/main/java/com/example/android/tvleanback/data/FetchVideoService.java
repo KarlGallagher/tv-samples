@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.example.android.tvleanback.R;
+import com.example.android.tvleanback.model.Video;
 
 import org.json.JSONException;
 
@@ -45,12 +46,16 @@ public class FetchVideoService extends IntentService {
     @Override
     protected void onHandleIntent(Intent workIntent) {
         VideoDbBuilder builder = new VideoDbBuilder(getApplicationContext());
-
         try {
             List<ContentValues> contentValuesList =
-                    builder.fetch(getResources().getString(R.string.catalog_url));
+                    builder.fetch(workIntent.getExtras().getString("content_url", getResources().getString(R.string.catalog_url)));
             ContentValues[] downloadedVideoContentValues =
                     contentValuesList.toArray(new ContentValues[contentValuesList.size()]);
+
+            if (workIntent.getBooleanExtra("update", false))
+            {
+                getApplicationContext().getContentResolver().delete(VideoContract.VideoEntry.CONTENT_URI, null, null);
+            }
             getApplicationContext().getContentResolver().bulkInsert(VideoContract.VideoEntry.CONTENT_URI,
                     downloadedVideoContentValues);
         } catch (IOException | JSONException e) {

@@ -32,6 +32,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -129,7 +130,7 @@ public class VideoDbBuilder {
 
                 String format = video.optString(TAG_FORMAT);
 
-                if (!format.equals("dash")){
+                if (format.equals("hls")){
                     continue;
                 }
 
@@ -161,7 +162,7 @@ public class VideoDbBuilder {
                 videoValues.put(VideoContract.VideoEntry.COLUMN_AUTH_TOKEN, authtoken);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_MULTITRUST_ASSET, asset);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_MULTITRUST_ENTITLEMENT, entitlement);
-                videoValues.put(VideoContract.VideoEntry.COLUMN_MULTITRUST_POLICY, asset);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_MULTITRUST_POLICY, policy);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_DRM_SCHEME, drmScheme);
 
                 // Fixed defaults.
@@ -237,7 +238,8 @@ public class VideoDbBuilder {
     private JSONObject fetchJSON(String urlString) throws JSONException, IOException {
         BufferedReader reader = null;
         java.net.URL url = new java.net.URL(urlString);
-        HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+        URLConnection urlConnection;
+        urlConnection = url.openConnection();
         try {
             reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(),
                     "utf-8"));
@@ -249,7 +251,7 @@ public class VideoDbBuilder {
             String json = sb.toString();
             return new JSONObject(json);
         } finally {
-            urlConnection.disconnect();
+            ((HttpURLConnection)urlConnection).disconnect();
             if (null != reader) {
                 try {
                     reader.close();
