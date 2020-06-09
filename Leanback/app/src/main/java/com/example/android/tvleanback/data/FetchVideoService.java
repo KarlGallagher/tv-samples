@@ -48,7 +48,7 @@ public class FetchVideoService extends IntentService {
         VideoDbBuilder builder = new VideoDbBuilder(getApplicationContext());
         try {
             List<ContentValues> contentValuesList =
-                    builder.fetch(workIntent.getExtras().getString("content_url", getResources().getString(R.string.catalog_url)));
+                    builder.fetch(workIntent.getExtras().getString("content_url", getResources().getString(R.string.content_url)));
             ContentValues[] downloadedVideoContentValues =
                     contentValuesList.toArray(new ContentValues[contentValuesList.size()]);
 

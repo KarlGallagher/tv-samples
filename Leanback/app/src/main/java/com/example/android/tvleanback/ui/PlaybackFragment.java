@@ -303,19 +303,19 @@ public class PlaybackFragment extends VideoSupportFragment {
 
             //calls prepareMediaForPlaying when completed
             Log.d("PlaybackFragment", "Requesting Token");
-            String user = mPreferences.getString(getString(R.string.pref_title_username), "will");
-            String pass = mPreferences.getString(getString(R.string.pref_title_password), "will");
-            String url = mPreferences.getString(getString(R.string.pref_title_portal), "https://urm.latens.com:7555");
+            String user = mPreferences.getString(getString(R.string.pref_title_username), getString(R.string.user));
+            String pass = mPreferences.getString(getString(R.string.pref_title_password), getString(R.string.pass));
+            String url = mPreferences.getString(getString(R.string.pref_title_portal), getString(R.string.portal_url));
 
             //If setting was added and reverted the pref may be an empty string and default needs defined manually
             if (user.isEmpty()){
-                user = "will";
+                user = getString(R.string.user);
             }
             if (pass.isEmpty()){
-                pass = "will";
+                pass = getString(R.string.pass);
             }
             if (url.isEmpty()){
-                url = "https://urm.latens.com:7555";
+                url = getString(R.string.portal_url);
             }
 
             new GetTokenTask(url, user, pass, video).execute();
@@ -333,11 +333,19 @@ public class PlaybackFragment extends VideoSupportFragment {
 
     private DrmSessionManager buildDrmSessionManager(Video video, String authtoken) {
         String[] drmKeyRequestPropertiesList = new String[] {authtoken};
-        String proxy = mPreferences.getString(getString(R.string.pref_title_proxy), mVideo.license);
+
+        String proxy = video.license;
         if (proxy.isEmpty()){
-            proxy = mVideo.license;
+            proxy = mPreferences.getString(getString(R.string.pref_title_proxy), getString(R.string.proxy_url));
         }
-        MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(mVideo.license, drmKeyRequestPropertiesList);
+
+        //Handle case were preference is empty
+        if (proxy.isEmpty()) {
+            proxy = getString(R.string.proxy_url);
+        }
+
+
+        MultiTrustDrmCallback multiTrustDrmCallback = createMultiTrustDrmCallback(proxy, drmKeyRequestPropertiesList);
         DefaultLoadErrorHandlingPolicy pol = new DefaultLoadErrorHandlingPolicy(0);
         DrmSessionManager drmSessionManager = new DefaultDrmSessionManager.Builder()
                 .setUuidAndExoMediaDrmProvider(setUUID(), FrameworkMediaDrm.DEFAULT_PROVIDER)

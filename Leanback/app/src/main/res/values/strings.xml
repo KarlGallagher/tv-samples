@@ -38,7 +38,18 @@
     <string name="no_search_results">No search results found for \'%1$s\'</string>
 <!--    <string name="catalog_url">https://storage.googleapis.com/android-tv/android_tv_videos_new.json</string>-->
     <!--<string name="catalog_url">https://raw.githubusercontent.com/EddieMc/JsonTest/master/content.json</string>-->
-    <string name="catalog_url">https://urm.latens.com:9443/demo/Ti41player/demo_content.json</string>
+
+
+    <!--MultiTrust Defaults-->
+    <string name="content_url">https://urm.latens.com:9443/demo/Ti42player/demo_content.json</string>
+    <string name="proxy_url">https://urm.latens.com:6443/WvLicenseProxy42</string>
+    <string name="portal_url">https://urm.latens.com:7558</string>
+    <string name="user">will</string>
+    <string name="pass">will</string>
+
+
+
+
 
     <!-- Error messages -->
 
@@ -119,11 +130,17 @@
     <string name="pref_key_screen_signin">signin</string>
     <string name="pref_title_screen_signin">Please Login</string>
     <string name="pref_title_login_description">Please enter your username, password and portal url</string>
+
+
+    <!-- MulitTrust Settings -->
     <string name="pref_title_username">Username</string>
     <string name="pref_title_password">Password</string>
     <string name="pref_title_proxy">Proxy</string>
     <string name="pref_title_portal">Portal</string>
     <string name="pref_title_content">Content</string>
+
+
+
     <string name="pref_key_login">pref_login</string>
     <string name="pref_title_login">Login</string>
     <string name="playback_tag">PLAYBACK_TAG</string>

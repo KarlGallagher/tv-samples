@@ -111,10 +111,10 @@ public class MainFragment extends BrowseSupportFragment
         super.onActivityCreated(savedInstanceState);
 
         mPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        mLastContentList = mPreferences.getString(getString(R.string.pref_title_content), getString(R.string.catalog_url));
+        mLastContentList = mPreferences.getString(getString(R.string.pref_title_content), getString(R.string.content_url));
 
         if (mLastContentList.isEmpty()) {
-            mLastContentList = getString(R.string.catalog_url);
+            mLastContentList = getString(R.string.content_url);
         }
 
         // Prepare the manager that maintains the same background image between activities.
@@ -148,7 +148,7 @@ public class MainFragment extends BrowseSupportFragment
     @Override
     public void onResume() {
         super.onResume();
-        String content = mPreferences.getString(getString(R.string.pref_title_content), getString(R.string.catalog_url));
+        String content = mPreferences.getString(getString(R.string.pref_title_content), getString(R.string.content_url));
         if (content != mLastContentList){
             mLastContentList = content;
             // Start an Intent to fetch the videos.
