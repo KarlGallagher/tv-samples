@@ -314,7 +314,7 @@ public class PlaybackFragment extends VideoSupportFragment {
             if (pass.isEmpty()){
                 pass = getString(R.string.pass);
             }
-            if (url.isEmpty()){
+            if (url.isEmpty()) {
                 url = getString(R.string.portal_url);
             }
 
@@ -625,7 +625,8 @@ public class PlaybackFragment extends VideoSupportFragment {
         protected String doInBackground(Void... voids) {
             String ent  = this.Entitlement.isEmpty() ? "" : "&entitlement="+this.Entitlement;
             String pol  = this.Policy.isEmpty() ? "" : "&policy="+this.Policy;
-            String request = this.Url + "/" + this.Path + "?username=" + this.Username + "&password=" + this.Password + "&asset=" + this.Asset + "&duration=3600" + ent + pol;
+            String asset = this.Asset.isEmpty() ? "test" : this.Asset;
+            String request = this.Url + "/" + this.Path + "?username=" + this.Username + "&password=" + this.Password + "&asset=" + asset + "&duration=3600" + ent + pol;
 
             try {
                 java.net.URL url = new java.net.URL(request);
