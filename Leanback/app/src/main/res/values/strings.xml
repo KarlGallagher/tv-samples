@@ -41,9 +41,9 @@
 
 
     <!--MultiTrust Defaults-->
-    <string name="content_url">https://urm.latens.com:9443/demo/Ti42player/demo_content.json</string>
+    <string name="content_url">https://urm.latens.com:9443/demo/demo_content.json</string>
     <string name="proxy_url">https://urm.latens.com:6443/WvLicenseProxy42</string>
-    <string name="portal_url">https://urm.latens.com:7558</string>
+    <string name="portal_url">https://urm.latens.com:7555</string>
     <string name="user">will</string>
     <string name="pass">will</string>
 
